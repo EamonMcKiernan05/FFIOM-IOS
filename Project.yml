@@ -1,0 +1,33 @@
+name: FFIOM
+options:
+  bundleIdPrefix: com.ffiom
+  xcodeProjectName: FFIOM.xcodeproj
+  deploymentTarget:
+    iOS: "18.0"
+  groupSortPosition: top
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    TARGETED_DEVICE_FAMILIES: "1,2"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_FILE: FFIOM/Info.plist
+
+targets:
+  FFIOM:
+    type: application
+    platform: iOS
+    sources:
+      - path: FFIOM
+        type: group
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ffiom.app
+        PRODUCT_NAME: FFIOM
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_FILE: FFIOM/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_LAUNCHSCREEN_STORYBOARD_COMPILATION_MODE: Enabled
+        SWIFT_EMIT_LOC_STRINGS: YES
