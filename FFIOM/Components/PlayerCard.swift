@@ -18,12 +18,12 @@ struct PlayerCard: View {
                     if player.isCaptain { Image(systemName: "c.circle.fill").foregroundColor(.yellow).font(.caption) }
                     else if player.isViceCaptain { Image(systemName: "v.circle.fill").foregroundColor(.gray).font(.caption) }
                 }
-                Text(player.team).font(.caption).foregroundColor(.secondary)
+                Text(player.teamName).font(.caption).foregroundColor(.secondary)
             }
             Spacer()
             if showPoints {
                 VStack(alignment: .trailing, spacing: 2) {
-                    if let gp = player.gameweekPoints {
+                    if let gp = player.gwPoints {
                         Text(String(format: "%.0f", gp)).font(.title3.bold())
                             .foregroundColor(gp > 0 ? .green : .gray)
                     }

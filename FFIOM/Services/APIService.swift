@@ -5,14 +5,14 @@ class APIService: ObservableObject {
     static let shared = APIService()
     @Published var authToken: String?
     @Published var currentUserId: Int?
+    @Published var currentTeamId: Int?
     private let baseURL = "https://ffiom.com"
     private let keychain = KeychainService()
     
     private init() {
         self.authToken = keychain.getString(forKey: "authToken")
-        if let uid = keychain.getString(forKey: "userId") {
-            self.currentUserId = Int(uid)
-        }
+        if let uid = keychain.getString(forKey: "userId") { self.currentUserId = Int(uid) }
+        if let tid = keychain.getString(forKey: "teamId") { self.currentTeamId = Int(tid) }
     }
     
     private func headers() -> [String: String] {
@@ -37,27 +37,32 @@ class APIService: ObservableObject {
         catch { throw APIError.decodeError(error.localizedDescription) }
     }
     
+    // MARK: - Auth (uses /api/users/ prefix per production API)
     func login(username: String, password: String) async throws -> AuthResponse {
         let r = LoginRequest(username: username, password: password)
         let resp: AuthResponse = try await request(endpoint: "/api/users/login", method: "POST", body: r, responseType: AuthResponse.self)
-        authToken = resp.token; currentUserId = resp.user.id
-        keychain.setString(resp.token, forKey: "authToken")
+        authToken = resp.accessToken; currentUserId = resp.user.id
+        if let tid = resp.team?.id { currentTeamId = tid }
+        keychain.setString(resp.accessToken, forKey: "authToken")
         keychain.setString("\(resp.user.id)", forKey: "userId")
+        if let tid = resp.team?.id { keychain.setString("\(tid)", forKey: "teamId") }
         keychain.setString(resp.user.username, forKey: "username")
         return resp
     }
-    func register(username: String, password: String, email: String? = nil) async throws -> AuthResponse {
+    func register(username: String, password: String, email: String) async throws -> AuthResponse {
         let r = RegisterRequest(username: username, password: password, email: email)
         let resp: AuthResponse = try await request(endpoint: "/api/users/register", method: "POST", body: r, responseType: AuthResponse.self)
-        authToken = resp.token; currentUserId = resp.user.id
-        keychain.setString(resp.token, forKey: "authToken")
+        authToken = resp.accessToken; currentUserId = resp.user.id
+        if let tid = resp.team?.id { currentTeamId = tid }
+        keychain.setString(resp.accessToken, forKey: "authToken")
         keychain.setString("\(resp.user.id)", forKey: "userId")
+        if let tid = resp.team?.id { keychain.setString("\(tid)", forKey: "teamId") }
         keychain.setString(resp.user.username, forKey: "username")
         return resp
     }
     func logout() {
-        authToken = nil; currentUserId = nil
-        keychain.remove("authToken"); keychain.remove("userId"); keychain.remove("username")
+        authToken = nil; currentUserId = nil; currentTeamId = nil
+        keychain.remove("authToken"); keychain.remove("userId"); keychain.remove("teamId"); keychain.remove("username")
     }
     func refreshSession() async -> Bool {
         guard authToken != nil else { return false }
@@ -67,33 +72,54 @@ class APIService: ObservableObject {
     
     // MARK: - Gameweeks
     func fetchGameweek() async throws -> Gameweek {
-        try await request(endpoint: "/api/gameweeks/current", responseType: Gameweek.self)
+        let resp: GameweekResponse = try await request(endpoint: "/api/gameweeks/current", responseType: GameweekResponse.self)
+        return resp.gameweek
     }
     func fetchGameweeks() async throws -> [Gameweek] {
-        try await request(endpoint: "/api/gameweeks/", responseType: [Gameweek].self)
+        // Returns {gameweeks: [...], current_gw: {...}}
+        struct GWList: Codable { let gameweeks: [Gameweek] }
+        let resp: GWList = try await request(endpoint: "/api/gameweeks/", responseType: GWList.self)
+        return resp.gameweeks
     }
     
     // MARK: - Leaderboard
     func fetchLeaderboard(limit: Int = 100) async throws -> [LeaderboardEntry] {
-        try await request(endpoint: "/api/leaderboard?limit=\(limit)", responseType: [LeaderboardEntry].self)
+        let resp: LeaderboardResponse = try await request(endpoint: "/api/leaderboard/", responseType: LeaderboardResponse.self)
+        return resp.entries
     }
     
-    // MARK: - My Team
-    func fetchMyTeam() async throws -> [Player] {
+    // MARK: - My Team / Squad
+    func fetchMyTeam() async throws -> [SquadPlayer] {
         guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        return try await request(endpoint: "/api/users/\(uid)/squad", responseType: [Player].self)
+        struct TeamResp: Codable { let squad: [SquadPlayer]? }
+        let resp: TeamResp = try await request(endpoint: "/api/users/\(uid)/team", responseType: TeamResp.self)
+        return resp.squad ?? []
     }
-    func setCaptain(playerId: Int) async throws {
+    func fetchSquad() async throws -> [SquadPlayer] {
         guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(uid)/team/captain", method: "PUT", body: ["player_id": playerId], responseType: Bool.self)
+        return try await request(endpoint: "/api/users/\(uid)/squad", responseType: [SquadPlayer].self)
     }
-    func setViceCaptain(playerId: Int) async throws {
-        guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(uid)/team/vice-captain", method: "PUT", body: ["player_id": playerId], responseType: Bool.self)
+    
+    // MARK: - Captain / Vice-Captain (uses squad_id not player_id)
+    func setCaptain(squadId: Int) async throws {
+        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        try await request(endpoint: "/api/users/\(tid)/captain/\(squadId)", method: "POST", responseType: Bool.self)
     }
-    func setStartingXI(playerIds: [Int]) async throws {
+    func setViceCaptain(squadId: Int) async throws {
+        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        try await request(endpoint: "/api/users/\(tid)/vice-captain/\(squadId)", method: "POST", responseType: Bool.self)
+    }
+    
+    // MARK: - Transfers (POST /api/transfers/player)
+    func transferPlayer(playerInId: Int? = nil, playerOutId: Int? = nil) async throws {
         guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(uid)/team/formation", method: "PUT", body: ["player_ids": playerIds], responseType: Bool.self)
+        struct TransferBody: Codable {
+            let user_id: Int
+            let player_in_id: Int?
+            let player_out_id: Int?
+        }
+        let body = TransferBody(user_id: uid, player_in_id: playerInId, player_out_id: playerOutId)
+        try await request(endpoint: "/api/transfers/player", method: "POST", body: body, responseType: Bool.self)
     }
     
     // MARK: - Players
@@ -127,23 +153,17 @@ class APIService: ObservableObject {
         try await request(endpoint: "/api/users/me", responseType: User.self)
     }
     
-    // MARK: - Transfers
-    func fetchTransferHistory() async throws -> [Transfer] {
-        guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        return try await request(endpoint: "/api/users/\(uid)/team/history", responseType: [Transfer].self)
-    }
-    
     // MARK: - Chips
-    func getChipStatus() async throws -> Chip {
-        guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        return try await request(endpoint: "/api/users/\(uid)/team/chip", responseType: Chip.self)
+    func getChipStatus() async throws -> [Chip] {
+        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        return try await request(endpoint: "/api/users/\(tid)/chips", responseType: [Chip].self)
     }
-    func setChip(chipType: String) async throws {
-        guard let uid = currentUserId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(uid)/team/chip", method: "POST", body: ["chip_type": chipType], responseType: Bool.self)
+    func activateChip(chipType: String) async throws {
+        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        try await request(endpoint: "/api/users/\(tid)/chips/activate/\(chipType)", method: "POST", responseType: Bool.self)
     }
     
-    // MARK: - Stubs for missing API endpoints
+    // MARK: - Stubs (endpoints not implemented yet)
     func fetchLeagues() async throws -> [League] { return [] }
     func createLeague(name: String, isPrivate: Bool = false) async throws -> League { throw APIError.invalidResponse }
     func joinLeague(code: String) async throws { throw APIError.invalidResponse }
@@ -151,8 +171,6 @@ class APIService: ObservableObject {
     func fetchNotifications() async throws -> [AppNotification] { return [] }
     func markAllNotificationsRead() async throws {}
     func fetchDreamTeam(gameweek: Int? = nil) async throws -> [Player] { return try await fetchTopPlayers(limit: 11) }
-    func addPlayer(playerId: Int) async throws { throw APIError.invalidResponse }
-    func removePlayer(playerId: Int) async throws { throw APIError.invalidResponse }
 }
 
 enum APIError: LocalizedError {

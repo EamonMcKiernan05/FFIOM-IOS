@@ -1,29 +1,29 @@
 import Foundation
 import SwiftUI
 
-struct Gameweek: Codable {
-    let id: Int
-    let name: String
-    let status: String
-    let deadline: String?
-    let isActive: Bool
-    
+struct GameweekResponse: Codable {
+    let gameweek: Gameweek
+    let deadlineRemainingSeconds: Int?
+    let deadlineRemainingFormatted: String?
+    let scoringProgress: String?
     enum CodingKeys: String, CodingKey {
-        case id, name, status, deadline
-        case isActive = "is_active"
+        case gameweek; case deadlineRemainingSeconds = "deadline_remaining_seconds"
+        case deadlineRemainingFormatted = "deadline_remaining_formatted"
+        case scoringProgress = "scoring_progress"
     }
-    
-    var statusDisplay: String {
-        switch status.lowercased() {
-        case "expired": return "Expired"; case "live": return "Live"
-        case "open": return "Open"; case "upcoming": return "Upcoming"
-        default: return status
-        }
+}
+
+struct Gameweek: Codable {
+    let id: Int; let number: Int; let season: String
+    let startDate: String?; let deadline: String?
+    let closed: Bool; let scored: Bool
+    enum CodingKeys: String, CodingKey {
+        case id, number, season, closed, scored
+        case startDate = "start_date"; case deadline
     }
-    var statusColor: Color {
-        switch status.lowercased() {
-        case "expired": return .red; case "live": return .green
-        case "open": return .orange; default: return .gray
-        }
-    }
+    var name: String { "GW \(number)" }
+    var status: String { if scored { return "Expired" }; if closed { return "Closed" }; return "Open" }
+    var isActive: Bool { !closed && !scored }
+    var statusDisplay: String { status }
+    var statusColor: Color { if scored { return .red }; if closed { return .orange }; return .green }
 }

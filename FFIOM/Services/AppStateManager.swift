@@ -4,7 +4,7 @@ import Foundation
 class AppStateManager: ObservableObject {
     @Published var gameweek: Gameweek?
     @Published var leaderboard: [LeaderboardEntry] = []
-    @Published var myTeam: [Player] = []
+    @Published var myTeam: [SquadPlayer] = []
     @Published var availablePlayers: [Player] = []
     @Published var fixtures: [Fixture] = []
     @Published var transfers: [Transfer] = []
@@ -12,6 +12,7 @@ class AppStateManager: ObservableObject {
     @Published var notifications: [AppNotification] = []
     @Published var dreamTeam: [Player] = []
     @Published var userStats: User?
+    @Published var chips: [Chip] = []
     private let api = APIService.shared
     
     func loadAllData() async {
@@ -21,7 +22,6 @@ class AppStateManager: ObservableObject {
             group.addTask { do { let v = try await self.api.fetchMyTeam(); await MainActor.run { self.myTeam = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchPlayers(); await MainActor.run { self.availablePlayers = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchFixtures(); await MainActor.run { self.fixtures = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchLeagues(); await MainActor.run { self.leagues = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchNotifications(); await MainActor.run { self.notifications = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchMyStats(); await MainActor.run { self.userStats = v } } catch {} }
             await group.waitForAll()

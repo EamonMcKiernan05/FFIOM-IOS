@@ -24,7 +24,7 @@ struct PlayersView: View {
     
     var filtered: [Player] {
         var p = appState.availablePlayers
-        if !search.isEmpty { p = p.filter { $0.name.lowercased().contains(search.lowercased()) || $0.team.lowercased().contains(search.lowercased()) } }
+        if !search.isEmpty { p = p.filter { $0.name.lowercased().contains(search.lowercased()) || $0.teamName.lowercased().contains(search.lowercased()) } }
         if position != .all { p = p.filter { $0.position.lowercased() == position.rawValue } }
         switch sort {
         case .points: return p.sorted { $0.totalPoints > $1.totalPoints }

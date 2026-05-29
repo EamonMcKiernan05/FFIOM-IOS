@@ -1,52 +1,39 @@
 import Foundation
 import SwiftUI
 
+// Player from /api/players/ list
 struct Player: Codable, Identifiable, Hashable {
-    let id: Int
-    let name: String
-    let team: String
-    let teamShort: String?
-    let position: String
-    var price: Double
-    var totalPoints: Double
-    var form: Double
-    var goals: Int
-    var assists: Int
-    var selectedByPercent: Double
-    var isCaptain: Bool
-    var isViceCaptain: Bool
-    var isInStartingXI: Bool
-    var gameweekPoints: Double?
+    let id: Int; let name: String
+    let team: TeamInfo?; let position: String
+    var price: Double; let priceStart: Double
+    let apps: Int; let goals: Int; let assists: Int
+    let totalPoints: Double; let gwPoints: Double?
+    let form: Double; let selectedByPercent: Double
+    let isInjured: Bool
+    var isCaptain: Bool { false }
+    var isViceCaptain: Bool { false }
+    var isInStartingXI: Bool { false }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, team, position, price
-        case teamShort = "team_short"
-        case totalPoints = "total_points"
-        case form, goals, assists
-        case selectedByPercent = "selected_by_percent"
-        case isCaptain = "is_captain"
-        case isViceCaptain = "is_vice_captain"
-        case isInStartingXI = "is_in_starting_xi"
-        case gameweekPoints = "gameweek_points"
+        case id, name, team, position, price, apps, goals, assists, form
+        case priceStart = "price_start"; case totalPoints = "total_points"
+        case gwPoints = "gw_points"; case selectedByPercent = "selected_by_percent"
+        case isInjured = "is_injured"
     }
-    
+    var teamName: String { team?.name ?? "Unknown" }
     var formattedPrice: String { String(format: "%.1fm", price) }
-    
     var positionBadge: String {
-        switch position.prefix(2).uppercased() {
-        case "GK": return "GK"; case "DE": return "DE"
-        case "MF": return "MF"; case "FW": return "FW"
-        default: return position.prefix(2).uppercased()
-        }
+        let p = position.uppercased()
+        if p.hasPrefix("GK") { return "GK" }
+        if p.hasPrefix("DEF") { return "DEF" }
+        if p.hasPrefix("MID") { return "MID" }
+        return "FWD"
     }
-    
     var positionColor: Color {
-        switch position.lowercased() {
-        case "goalkeeper", "gk": return .blue
-        case "defender", "de": return .green
-        case "midfielder", "mf": return .purple
-        case "forward", "fw": return .red
-        default: return .gray
-        }
+        let p = position.uppercased()
+        if p.hasPrefix("GK") { return .blue }
+        if p.hasPrefix("DEF") { return .green }
+        if p.hasPrefix("MID") { return .purple }
+        return .red
     }
 }

@@ -18,7 +18,7 @@ class AuthManager: ObservableObject {
             currentUser = resp.user; isAuthenticated = true; isLoading = false; return true
         } catch { errorMessage = error.localizedDescription; isLoading = false; return false }
     }
-    func register(username: String, password: String, email: String? = nil) async -> Bool {
+    func register(username: String, password: String, email: String) async -> Bool {
         isLoading = true; errorMessage = nil
         do {
             let resp = try await api.register(username: username, password: password, email: email)

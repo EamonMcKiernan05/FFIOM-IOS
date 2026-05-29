@@ -95,5 +95,5 @@ struct RegisterView: View {
         }
         .padding(.horizontal)
     }
-    private func register() { Task { let ok = await authManager.register(username: username, password: password, email: email.isEmpty ? nil : email); if !ok { onSubmit() } } }
+    private func register() { Task { let ok = await authManager.register(username: username, password: password, email: email); if !ok { onSubmit() } } }
 }

@@ -12,6 +12,7 @@
 		0C400E78BAD9066EC5F2CC8B /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1A24975AA906F2E831F70D /* Notification.swift */; };
 		0D2608BD53369BECBA0E4800 /* Gameweek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53269BA85732BBB2C3E55B10 /* Gameweek.swift */; };
 		21C655778AF24E7B780B1DDD /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F25C24944E4E799ACDEB120 /* HelpView.swift */; };
+		2EF6C68FF41223E9CF14C3A2 /* SquadPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E877EE4760EE37ABCFFFBBA /* SquadPlayer.swift */; };
 		31EBC4C6A08EC7BF68C7B1E9 /* EmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30ECD01D10524D88BAECF8AE /* EmptyState.swift */; };
 		378B35EED1D7D4C5338F05E8 /* Transfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BC38833A400A9203663EB7 /* Transfer.swift */; };
 		38459B33A7D786B86D070DA5 /* FFIOMApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7949DCEE856E3AA68F1C712A /* FFIOMApp.swift */; };
@@ -50,6 +51,7 @@
 		0BC8A3BEA2FCE171A84A6B4A /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		0DE9B0F7840C36B40BA14EAB /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		12634CAAF1FC8CAA7A50D7B4 /* PlayerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCard.swift; sourceTree = "<group>"; };
+		1E877EE4760EE37ABCFFFBBA /* SquadPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadPlayer.swift; sourceTree = "<group>"; };
 		28553E9CEFB9AF0101D0406D /* AppStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateManager.swift; sourceTree = "<group>"; };
 		297E7F97C1F44D4D3F041943 /* Fixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fixture.swift; sourceTree = "<group>"; };
 		2BAD5E6426CF59A13CA3F55C /* FFIOM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FFIOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -161,6 +163,7 @@
 				907E6B269FB13AF1A407D1D7 /* League.swift */,
 				8A1A24975AA906F2E831F70D /* Notification.swift */,
 				981E62DD564912E0E29CD306 /* Player.swift */,
+				1E877EE4760EE37ABCFFFBBA /* SquadPlayer.swift */,
 				66BC38833A400A9203663EB7 /* Transfer.swift */,
 				6DB67920D162642FD0F106F5 /* User.swift */,
 			);
@@ -388,6 +391,7 @@
 				012980DA300DF8651ABBE620 /* PlayersView.swift in Sources */,
 				DEE551382128CA1E07F95946 /* RankingsView.swift in Sources */,
 				83A72396F03BD2490D32E399 /* SettingsView.swift in Sources */,
+				2EF6C68FF41223E9CF14C3A2 /* SquadPlayer.swift in Sources */,
 				F7A2128E30D7669045E19C19 /* TeamView.swift in Sources */,
 				378B35EED1D7D4C5338F05E8 /* Transfer.swift in Sources */,
 				B483BCEEA1E043CA5E1EC2B1 /* TransfersView.swift in Sources */,
