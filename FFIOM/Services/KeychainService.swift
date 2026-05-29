@@ -10,7 +10,8 @@ class KeychainService {
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
-        SecItemDelete(q as CFDictionary); SecItemAdd(q as CFDictionary, nil)
+        SecItemDelete(q as CFDictionary)
+        SecItemAdd(q as CFDictionary, nil)
     }
     func getString(forKey key: String) -> String? {
         let q: [String: Any] = [
@@ -21,7 +22,10 @@ class KeychainService {
         ]
         var result: AnyObject?
         guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
+              let data = result as? Data else {
+            // Fallback to UserDefaults (for simulator testing)
+            return UserDefaults.standard.string(forKey: key)
+        }
         return String(data: data, encoding: .utf8)
     }
     func remove(_ key: String) {

@@ -41,7 +41,7 @@ struct SquadPlayer: Codable, Identifiable, Hashable {
 
 struct PlayerInfo: Codable, Hashable {
     let id: Int; let name: String; let position: String
-    let price: Double; let team: TeamInfo?
+    let price: Double; let team: FootballTeam?
     let isInjured: Bool; let form: Double
     let selectedByPercent: Double; let totalPointsSeason: Double
     

@@ -4,7 +4,7 @@ import SwiftUI
 // Player from /api/players/ list
 struct Player: Codable, Identifiable, Hashable {
     let id: Int; let name: String
-    let team: TeamInfo?; let position: String
+    let team: FootballTeam?; let position: String
     var price: Double; let priceStart: Double
     let apps: Int; let goals: Int; let assists: Int
     let totalPoints: Double; let gwPoints: Double?
