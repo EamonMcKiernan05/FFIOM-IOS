@@ -52,48 +52,81 @@ struct AuthView: View {
 }
 
 struct LoginView: View {
-    @Binding var username: String; @Binding var password: String
-    @ObservedObject var authManager: AuthManager; var onSubmit: () -> Void
+    @Binding var username: String
+    @Binding var password: String
+    @ObservedObject var authManager: AuthManager
+    var onSubmit: () -> Void
+    
     var body: some View {
         VStack(spacing: 16) {
             Text("Log In").font(.title3.bold()).padding(.top, 20)
-            TextField("Username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
+            TextField("Username", text: $username)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            SecureField("Password", text: $password).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .submitLabel(.next)
+            SecureField("Password", text: $password)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            Button(action: login) { Text("Log In").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
-                .background(Color.green).foregroundColor(.white).cornerRadius(12) }
-            .disabled(username.isEmpty || password.isEmpty)
-            .opacity(username.isEmpty || password.isEmpty ? 0.5 : 1).padding(.top, 8)
+                .submitLabel(.done)
+                .onSubmit { login() }
+            Button(action: login) {
+                Text("Log In").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(Color.green).foregroundColor(.white).cornerRadius(12)
+            }
+            .padding(.top, 8)
         }
         .padding(.horizontal)
     }
-    private func login() { Task { let ok = await authManager.login(username: username, password: password); if !ok { onSubmit() } } }
+    
+    private func login() {
+        Task {
+            let ok = await authManager.login(username: username, password: password)
+            if !ok { onSubmit() }
+        }
+    }
 }
 
 struct RegisterView: View {
-    @Binding var username: String; @Binding var password: String; @Binding var email: String
-    @ObservedObject var authManager: AuthManager; var onSubmit: () -> Void
+    @Binding var username: String
+    @Binding var password: String
+    @Binding var email: String
+    @ObservedObject var authManager: AuthManager
+    var onSubmit: () -> Void
+    
     var body: some View {
         VStack(spacing: 12) {
             Text("Create Account").font(.title3.bold()).padding(.top, 20)
-            TextField("Username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
+            TextField("Username", text: $username)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            TextField("Email (optional)", text: $email).textInputAutocapitalization(.never).keyboardType(.emailAddress).autocorrectionDisabled()
+                .submitLabel(.next)
+            TextField("Email", text: $email)
+                .textInputAutocapitalization(.never).keyboardType(.emailAddress).autocorrectionDisabled()
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            SecureField("Password", text: $password).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .submitLabel(.next)
+            SecureField("Password", text: $password)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            Button(action: register) { Text("Create Account & Team").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
-                .background(Color.green).foregroundColor(.white).cornerRadius(12) }
-            .disabled(username.isEmpty || password.isEmpty)
-            .opacity(username.isEmpty || password.isEmpty ? 0.5 : 1).padding(.top, 4)
+                .submitLabel(.done)
+                .onSubmit { register() }
+            Button(action: register) {
+                Text("Create Account & Team").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(Color.green).foregroundColor(.white).cornerRadius(12)
+            }
+            .padding(.top, 4)
         }
         .padding(.horizontal)
     }
-    private func register() { Task { let ok = await authManager.register(username: username, password: password, email: email); if !ok { onSubmit() } } }
+    
+    private func register() {
+        Task {
+            let ok = await authManager.register(username: username, password: password, email: email.isEmpty ? "test@test.com" : email)
+            if !ok { onSubmit() }
+        }
+    }
 }
