@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		012980DA300DF8651ABBE620 /* PlayersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36BE92E1EF4C5B407139BCC /* PlayersView.swift */; };
+		99520D62B921188050BF52D1 /* ClubKits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367EF70F7F8B19848BB684A8 /* ClubKits.swift */; };
+		DA5833E1B7BC508B12A51485 /* JerseyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12139318580B2B7955CD836 /* JerseyIconView.swift */; };
 		0B6EDF09358482B24E0C4FA2 /* GameweekBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF2E53B3878831DF245678C /* GameweekBanner.swift */; };
 		0C400E78BAD9066EC5F2CC8B /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1A24975AA906F2E831F70D /* Notification.swift */; };
 		0D2608BD53369BECBA0E4800 /* Gameweek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53269BA85732BBB2C3E55B10 /* Gameweek.swift */; };
@@ -47,6 +49,8 @@
 
 /* Begin PBXFileReference section */
 		020CF98C1F418D4DA60F5D0B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		367EF70F7F8B19848BB684A8 /* ClubKits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubKits.swift; sourceTree = "<group>"; };
+		F12139318580B2B7955CD836 /* JerseyIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JerseyIconView.swift; sourceTree = "<group>"; };
 		02C93835C005F76E0F62068A /* DreamTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamTeamView.swift; sourceTree = "<group>"; };
 		0BC8A3BEA2FCE171A84A6B4A /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		0DE9B0F7840C36B40BA14EAB /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -207,6 +211,8 @@
 				B07D25196B7049F181B3477A /* LeaderboardRow.swift */,
 				3D03B2BE03B6073B054EF04F /* LoadingView.swift */,
 				12634CAAF1FC8CAA7A50D7B4 /* PlayerCard.swift */,
+				367EF70F7F8B19848BB684A8 /* ClubKits.swift */,
+				F12139318580B2B7955CD836 /* JerseyIconView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -396,7 +402,9 @@
 				378B35EED1D7D4C5338F05E8 /* Transfer.swift in Sources */,
 				B483BCEEA1E043CA5E1EC2B1 /* TransfersView.swift in Sources */,
 				DD697014F1B662636AF4618A /* User.swift in Sources */,
-			);
+							99520D62B921188050BF52D1 /* ClubKits.swift in Sources */,
+				DA5833E1B7BC508B12A51485 /* JerseyIconView.swift in Sources */,
+);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

@@ -31,14 +31,10 @@ struct PlayersView: View {
                 ForEach(filteredPlayers) { player in
                     NavigationLink(destination: PlayerDetailView(player: player)) {
                         HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color(red: 0.15, green: 0.45, blue: 0.8))
-                                    .frame(width: 40, height: 40)
-                                Text(player.name.prefix(1).uppercased())
-                                    .font(.caption.bold())
-                                    .foregroundColor(.white)
-                            }
+                            // Jersey icon
+                            JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 40)
+                                .frame(width: 44, height: 44)
+                            
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(player.name)
                                     .font(.subheadline.bold())
@@ -48,11 +44,17 @@ struct PlayersView: View {
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text("\(Int(player.totalPoints)) pts")
+                                // Price
+                                Text(String(format: "%.1fm", player.price))
                                     .font(.subheadline.bold())
                                     .foregroundColor(.green)
-                                Text("G:\(player.goals) A:\(player.assists)")
+                                // Points
+                                Text("\(Int(player.totalPoints)) pts")
                                     .font(.caption)
+                                    .foregroundColor(.secondary)
+                                // Goals/Assists
+                                Text("G:\(player.goals) A:\(player.assists)")
+                                    .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -92,20 +94,17 @@ struct PlayerDetailView: View {
             VStack(spacing: 16) {
                 // Player header
                 HStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(red: 0.15, green: 0.45, blue: 0.8))
-                            .frame(width: 60, height: 60)
-                        Text(player.name.prefix(1).uppercased())
-                            .font(.title.bold())
-                            .foregroundColor(.white)
-                    }
+                    JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 60)
+                        .frame(width: 66, height: 66)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(player.name)
                             .font(.title2.bold())
                         Text(player.teamName)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        Text(String(format: "%.1fm", player.price))
+                            .font(.headline)
+                            .foregroundColor(.green)
                     }
                 }
                 .padding()
