@@ -7,22 +7,20 @@ import SwiftUI
 struct TeamView: View {
     @ObservedObject var appState: AppStateManager
     
-    // 3-4-3 formation positions (percentage from top/left)
-    // Y=0 is attacking end (top), Y=100 is defensive end (bottom)
-    private let formationPositions: [(x: Double, y: Double)] = [
-        // 3 Forwards
-        (x: 50, y: 6),   // Center forward
-        (x: 25, y: 14),  // Left forward
-        (x: 75, y: 14),  // Right forward
+    private let formationPositions: [(x: CGFloat, y: CGFloat)] = [
+        // 3 Forwards (top of pitch = attacking end)
+        (x: 0.50, y: 0.06),   // Center forward
+        (x: 0.25, y: 0.14),  // Left forward
+        (x: 0.75, y: 0.14),  // Right forward
         // 4 Midfielders
-        (x: 15, y: 34),  // Left midfield
-        (x: 36, y: 32),  // Center-left midfield
-        (x: 64, y: 32),  // Center-right midfield
-        (x: 85, y: 34),  // Right midfield
+        (x: 0.15, y: 0.34),  // Left midfield
+        (x: 0.36, y: 0.32),  // Center-left midfield
+        (x: 0.64, y: 0.32),  // Center-right midfield
+        (x: 0.85, y: 0.34),  // Right midfield
         // 3 Defenders
-        (x: 20, y: 56),  // Left back
-        (x: 50, y: 54),  // Center back
-        (x: 80, y: 56),  // Right back
+        (x: 0.20, y: 0.58),  // Left back
+        (x: 0.50, y: 0.56),  // Center back
+        (x: 0.80, y: 0.58),  // Right back
     ]
     
     var startingPlayers: [SquadPlayer] {
@@ -45,12 +43,16 @@ struct TeamView: View {
                         )
                         .padding(.top, 40)
                     } else {
-                        PitchContainer(
-                            players: startingPlayers,
-                            positions: formationPositions,
-                            captainId: appState.myTeam.first(where: { $0.isCaptain })?.id,
-                            viceCaptainId: appState.myTeam.first(where: { $0.isViceCaptain })?.id
-                        )
+                        GeometryReader { geo in
+                            PitchContainer(
+                                geo: geo,
+                                players: startingPlayers,
+                                positions: formationPositions,
+                                captainId: appState.myTeam.first(where: { $0.isCaptain })?.id,
+                                viceCaptainId: appState.myTeam.first(where: { $0.isViceCaptain })?.id
+                            )
+                        }
+                        .aspectRatio(3 / 4, contentMode: .fit)
                         .padding(.horizontal, 12)
                         .padding(.top, 8)
                         
@@ -70,17 +72,16 @@ struct TeamView: View {
 // MARK: - Pitch Container
 
 struct PitchContainer: View {
+    let geo: GeometryProxy
     let players: [SquadPlayer]
-    let positions: [(x: Double, y: Double)]
+    let positions: [(x: CGFloat, y: CGFloat)]
     let captainId: Int?
     let viceCaptainId: Int?
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Green pitch with mowing stripes
-            PitchBackground()
+            pitchBackground(in: geo)
             
-            // Players positioned on pitch
             ForEach(Array(players.enumerated()), id: \.element.id) { index, player in
                 if index < positions.count {
                     let pos = positions[index]
@@ -91,6 +92,8 @@ struct PitchContainer: View {
                         player: player,
                         positionX: pos.x,
                         positionY: pos.y,
+                        containerWidth: geo.size.width,
+                        containerHeight: geo.size.height,
                         isCaptain: isCaptain,
                         isViceCaptain: isViceCaptain
                     )
@@ -98,12 +101,11 @@ struct PitchContainer: View {
             }
         }
     }
-}
-
-// MARK: - Pitch Background
-
-struct PitchBackground: View {
-    var body: some View {
+    
+    @ViewBuilder
+    private func pitchBackground(in geo: GeometryProxy) -> some View {
+        let w = geo.size.width
+        let h = geo.size.height
         ZStack {
             // Base green with mowing stripe pattern
             LinearGradient(
@@ -121,29 +123,38 @@ struct PitchBackground: View {
             // Center circle
             Circle()
                 .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
-                .frame(width: 80, height: 80)
-                .position(x: UIScreen.main.bounds.width / 2 - 6, y: 200)
+                .frame(width: w * 0.22, height: w * 0.22)
             
             // Center line
             Rectangle()
                 .fill(Color.white.opacity(0.2))
-                .frame(height: 1.5)
-                .padding(.horizontal, 12)
-                .offset(y: 200)
+                .frame(width: w, height: 1.5)
+                .position(x: w / 2, y: h / 2)
             
             // Penalty box top
             Rectangle()
                 .stroke(Color.white.opacity(0.15), lineWidth: 1.5)
-                .frame(width: UIScreen.main.bounds.width * 0.55, height: 60)
-                .offset(y: -170)
+                .frame(width: w * 0.5, height: h * 0.12)
+                .position(x: w / 2, y: h * 0.06)
+            
+            // Goal area top
+            Rectangle()
+                .stroke(Color.white.opacity(0.12), lineWidth: 1.5)
+                .frame(width: w * 0.25, height: h * 0.06)
+                .position(x: w / 2, y: h * 0.03)
             
             // Penalty box bottom
             Rectangle()
                 .stroke(Color.white.opacity(0.15), lineWidth: 1.5)
-                .frame(width: UIScreen.main.bounds.width * 0.55, height: 60)
-                .offset(y: 170)
+                .frame(width: w * 0.5, height: h * 0.12)
+                .position(x: w / 2, y: h * 0.94)
+            
+            // Goal area bottom
+            Rectangle()
+                .stroke(Color.white.opacity(0.12), lineWidth: 1.5)
+                .frame(width: w * 0.25, height: h * 0.06)
+                .position(x: w / 2, y: h * 0.97)
         }
-        .aspectRatio(3 / 4, contentMode: .fit)
     }
 }
 
@@ -151,25 +162,25 @@ struct PitchBackground: View {
 
 struct PitchPlayerNode: View {
     let player: SquadPlayer
-    let positionX: Double
-    let positionY: Double
+    let positionX: CGFloat
+    let positionY: CGFloat
+    let containerWidth: CGFloat
+    let containerHeight: CGFloat
     let isCaptain: Bool
     let isViceCaptain: Bool
     
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
             // Jersey icon with captain badge
             ZStack(alignment: .topTrailing) {
-                JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 36)
-                    .frame(width: 42, height: 42)
-                    .background(Color.black.opacity(0.2))
-                    .clipShape(Circle())
+                JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 32)
+                    .frame(width: 36, height: 36)
                 
                 if isCaptain {
                     Text("C")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 8, weight: .bold))
                         .foregroundColor(.black)
-                        .padding(3)
+                        .padding(2)
                         .background(Color.yellow)
                         .clipShape(Circle())
                 } else if isViceCaptain {
@@ -184,34 +195,34 @@ struct PitchPlayerNode: View {
             
             // Player name
             Text(player.name)
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 8, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
-                .frame(maxWidth: 60)
+                .frame(maxWidth: 52)
             
             // Club name
             Text(player.teamName)
-                .font(.system(size: 7))
-                .foregroundColor(.white.opacity(0.8))
+                .font(.system(size: 6))
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
-                .frame(maxWidth: 50)
+                .frame(maxWidth: 42)
             
             // Points + Price
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Text(String(format: "%.0f", player.gwPoints ?? 0))
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 7, weight: .bold))
                     .foregroundColor(.green)
                 
                 Text(String(format: "%.1fm", player.purchasePrice))
-                    .font(.system(size: 7))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 6))
+                    .foregroundColor(.white.opacity(0.6))
             }
         }
         .position(
-            x: UIScreen.main.bounds.width * (positionX / 100),
-            y: 400 * (positionY / 100)
+            x: containerWidth * positionX,
+            y: containerHeight * positionY
         )
     }
 }
@@ -258,32 +269,32 @@ struct BenchPlayerCard: View {
                 .font(.system(size: 8, weight: .bold))
                 .foregroundColor(.secondary)
             
-            JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 28)
-                .frame(width: 34, height: 34)
+            JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 24)
+                .frame(width: 28, height: 28)
             
             Text(player.name)
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 8, weight: .bold))
                 .foregroundColor(.white)
                 .lineLimit(1)
-                .frame(maxWidth: 55)
+                .frame(maxWidth: 50)
             
             Text(player.teamName)
-                .font(.system(size: 7))
+                .font(.system(size: 6))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
-                .frame(maxWidth: 45)
+                .frame(maxWidth: 40)
             
             HStack(spacing: 3) {
                 Text(String(format: "%.0f", player.gwPoints ?? 0))
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 7, weight: .bold))
                     .foregroundColor(.green)
                 
                 Text(String(format: "%.1fm", player.purchasePrice))
-                    .font(.system(size: 7))
+                    .font(.system(size: 6))
                     .foregroundColor(.secondary)
             }
         }
-        .frame(width: 65)
+        .frame(width: 58)
         .padding(.vertical, 6)
         .background(Color(red: 0.12, green: 0.12, blue: 0.18))
         .cornerRadius(8)
