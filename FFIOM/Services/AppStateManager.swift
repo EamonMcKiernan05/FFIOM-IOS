@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 class AppStateManager: ObservableObject {
     @Published var gameweek: Gameweek?
+    @Published var gameweeksList: [Gameweek] = []
     @Published var leaderboard: [LeaderboardEntry] = []
     @Published var myTeam: [SquadPlayer] = []
     @Published var availablePlayers: [Player] = []
@@ -18,6 +19,7 @@ class AppStateManager: ObservableObject {
     func loadAllData() async {
         await withTaskGroup(of: Void.self) { group in
             group.addTask { do { let v = try await self.api.fetchGameweek(); await MainActor.run { self.gameweek = v } } catch {} }
+            group.addTask { do { let v = try await self.api.fetchGameweeksList(); await MainActor.run { self.gameweeksList = v.gameweeks } } catch {} }
             group.addTask { do { let v = try await self.api.fetchLeaderboard(limit: 20); await MainActor.run { self.leaderboard = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchMyTeam(); await MainActor.run { self.myTeam = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchPlayers(); await MainActor.run { self.availablePlayers = v } } catch {} }

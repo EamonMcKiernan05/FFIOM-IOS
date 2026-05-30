@@ -2,58 +2,99 @@ import SwiftUI
 
 struct TransfersView: View {
     @ObservedObject var appState: AppStateManager
-    @State private var searchQuery = ""
-    @State private var transferMsg = ""
+    @State private var selectedPlayer: Player?
+    @State private var showTransferConfirm = false
+    @State private var errorMessage: String?
     @State private var showAlert = false
+    @State private var transferLoading = false
     
-    var filtered: [Player] {
-        if searchQuery.isEmpty { return appState.availablePlayers }
-        return appState.availablePlayers.filter { $0.name.lowercased().contains(searchQuery.lowercased()) || $0.teamName.lowercased().contains(searchQuery.lowercased()) }
+    var myPlayerIds: Set<Int> {
+        Set(appState.myTeam.map { $0.player_id })
     }
-    func isInTeam(_ p: Player) -> Bool { appState.myTeam.contains { $0.player_id == p.id } }
+    
+    var availablePlayers: [Player] {
+        appState.availablePlayers.filter { !myPlayerIds.contains($0.id) }
+    }
     
     var body: some View {
         NavigationStack {
             List {
-                Section("Available Players") {
-                    TextField("Search players...", text: $searchQuery).textFieldStyle(RoundedBorderTextFieldStyle())
-                    ForEach(filtered) { p in
+                ForEach(availablePlayers.prefix(20)) { player in
+                    Button {
+                        selectedPlayer = player
+                        showTransferConfirm = true
+                    } label: {
                         HStack(spacing: 12) {
                             ZStack {
-                                Circle().fill(p.positionColor).frame(width: 40, height: 40)
-                                Text(p.positionBadge).font(.caption.bold()).foregroundColor(.white)
+                                Circle()
+                                    .fill(Color.green.opacity(0.8))
+                                    .frame(width: 40, height: 40)
+                                Text("+")
+                                    .font(.title3.bold())
+                                    .foregroundColor(.white)
                             }
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(p.name).font(.subheadline.bold()).lineLimit(1)
-                                Text(p.teamName).font(.caption).foregroundColor(.secondary)
+                                Text(player.name)
+                                    .font(.subheadline.bold())
+                                Text(player.teamName)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text(p.formattedPrice).font(.subheadline.bold()).foregroundColor(.green)
-                                Text("G:\(p.goals) A:\(p.assists)").font(.caption2).foregroundColor(.secondary)
-                            }
-                            Button { transfer(p) } label: {
-                                Image(systemName: isInTeam(p) ? "minus.circle.fill" : "plus.circle.fill")
-                                    .foregroundColor(isInTeam(p) ? .red : .green).font(.title3)
+                                Text("\(player.price, specifier: "%.1f")m")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.green)
+                                Text("G:\(player.goals) A:\(player.assists)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                         }
                         .padding(.vertical, 4)
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .navigationTitle("Transfers")
-            .alert(transferMsg, isPresented: $showAlert) { Button("OK") {} }
+            .navigationBarTitleDisplayMode(.large)
+            .refreshable { await appState.refreshPlayers() }
+            .alert("Error", isPresented: $showAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "An error occurred")
+            }
+            .confirmationDialog(
+                "Add \(selectedPlayer?.name ?? "")?",
+                isPresented: $showTransferConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Add to Squad") {
+                    performTransfer()
+                }
+                .tint(.green)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                if let player = selectedPlayer {
+                    Text("Price: \(player.price, specifier: "%.1f")m\nGoals: \(player.goals) • Assists: \(player.assists)")
+                }
+            }
         }
     }
     
-    func transfer(_ p: Player) {
+    private func performTransfer() {
+        guard let player = selectedPlayer else { return }
+        transferLoading = true
         Task {
             do {
-                if isInTeam(p) { try await APIService.shared.transferPlayer(playerOutId: p.id) }
-                else { try await APIService.shared.transferPlayer(playerInId: p.id) }
-                transferMsg = isInTeam(p) ? "Removed \(p.name)" : "Added \(p.name)"
-                showAlert = true; await appState.refreshMyTeam(); await appState.refreshPlayers()
-            } catch { transferMsg = error.localizedDescription; showAlert = true }
+                try await APIService.shared.transferPlayer(playerInId: player.id)
+                await appState.refreshMyTeam()
+                await appState.refreshPlayers()
+                transferLoading = false
+            } catch {
+                errorMessage = error.localizedDescription
+                showAlert = true
+                transferLoading = false
+            }
         }
     }
 }

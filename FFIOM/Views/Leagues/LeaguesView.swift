@@ -27,7 +27,7 @@ struct LeaguesView: View {
 struct LeagueDetailView: View {
     let league: League; @State private var standings: [LeaderboardEntry] = []
     var body: some View {
-        List { ForEach(standings) { e in LeaderboardRow(entry: e, isMe: false) } }
+        List { ForEach(Array(standings.enumerated()), id: \.element.id) { index, e in LeaderboardRow(entry: e, rank: index + 1) } }
         .navigationTitle(league.name)
         .onAppear { Task { do { standings = try await APIService.shared.fetchLeagueStandings(leagueId: league.id) } catch {} } }
     }
