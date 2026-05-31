@@ -71,7 +71,7 @@ struct UITextFieldWrapper: UIViewRepresentable {
 // MARK: - Auth Views
 
 struct AuthView: View {
-    @StateObject private var authManager = AuthManager()
+    @ObservedObject var authManager: AuthManager
     @State private var showLogin = true
     @State private var username = ""
     @State private var password = ""

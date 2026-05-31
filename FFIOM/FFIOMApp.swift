@@ -18,7 +18,7 @@ struct AppRouter: View {
     var body: some View {
         Group {
             if showAuth {
-                AuthView()
+                AuthView(authManager: authManager)
             } else {
                 MainTabView(appState: appState, authManager: authManager)
             }
