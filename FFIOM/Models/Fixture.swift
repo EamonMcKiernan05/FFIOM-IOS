@@ -53,3 +53,24 @@ struct Fixture: Codable, Identifiable, Hashable {
 struct FixturesResponse: Codable {
     let fixtures: [Fixture]
 }
+
+// MARK: - Fixture extensions for transfer overlay
+extension Fixture {
+    func opponent(forTeam teamName: String) -> String {
+        if homeTeam == teamName { return awayTeam }
+        if awayTeam == teamName { return homeTeam }
+        return homeTeam
+    }
+    
+    func isHome(forTeam teamName: String) -> Bool {
+        homeTeam == teamName
+    }
+}
+
+// MARK: - Surname helper
+extension String {
+    var surname: String {
+        let parts = split(separator: " ")
+        return parts.last?.description.capitalized ?? self
+    }
+}

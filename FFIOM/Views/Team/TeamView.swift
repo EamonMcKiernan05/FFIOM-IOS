@@ -1,29 +1,27 @@
 import SwiftUI
 
 // MARK: - Team View - Pitch Layout
-// Green football pitch with players in 3-4-3 formation (no goalkeeper)
-// 10 outfield players on pitch + bench players underneath
-// Pitch markings match web UI: center circle, penalty areas, 6-yard boxes, corner arcs
+// Half-pitch with 3-4-3 formation, chip activation bar, centered bench
 
 struct TeamView: View {
     @ObservedObject var appState: AppStateManager
     
-    // Formation positions centered on the pitch (3-4-3, top-down view)
+    // Formation positions for 3-4-3 (top-down, half pitch)
     // x: horizontal (0=left, 1=right), y: vertical (0=attacking end, 1=defending end)
     private let formationPositions: [(x: CGFloat, y: CGFloat)] = [
-        // 3 Forwards (top of pitch = attacking end)
-        (x: 0.50, y: 0.06),   // Center forward
-        (x: 0.22, y: 0.14),  // Left forward
-        (x: 0.78, y: 0.14),  // Right forward
+        // 3 Forwards (attacking end)
+        (x: 0.50, y: 0.08),   // Center forward
+        (x: 0.22, y: 0.16),   // Left forward
+        (x: 0.78, y: 0.16),   // Right forward
         // 4 Midfielders
-        (x: 0.12, y: 0.34),  // Left midfield
-        (x: 0.35, y: 0.32),  // Center-left midfield
-        (x: 0.65, y: 0.32),  // Center-right midfield
-        (x: 0.88, y: 0.34),  // Right midfield
+        (x: 0.12, y: 0.38),   // Left midfield
+        (x: 0.35, y: 0.36),   // Center-left midfield
+        (x: 0.65, y: 0.36),   // Center-right midfield
+        (x: 0.88, y: 0.38),   // Right midfield
         // 3 Defenders
-        (x: 0.18, y: 0.58),  // Left back
-        (x: 0.50, y: 0.56),  // Center back
-        (x: 0.82, y: 0.58),  // Right back
+        (x: 0.20, y: 0.62),   // Left back
+        (x: 0.50, y: 0.60),   // Center back
+        (x: 0.80, y: 0.62),   // Right back
     ]
     
     var startingPlayers: [SquadPlayer] {
@@ -31,13 +29,19 @@ struct TeamView: View {
     }
     
     var benchPlayers: [SquadPlayer] {
-        appState.myTeam.filter { !$0.isStarting }
+        Array(appState.myTeam.filter { !$0.isStarting }.prefix(3))
     }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
+                    // Chip activation bar
+                    ChipsBarView(appState: appState)
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+                        .padding(.bottom, 8)
+                    
                     if appState.myTeam.isEmpty {
                         EmptyState(
                             icon: "person.3.fill",
@@ -46,8 +50,9 @@ struct TeamView: View {
                         )
                         .padding(.top, 40)
                     } else {
+                        // Half pitch
                         GeometryReader { geo in
-                            PitchContainer(
+                            HalfPitchContainer(
                                 geo: geo,
                                 players: startingPlayers,
                                 positions: formationPositions,
@@ -57,8 +62,9 @@ struct TeamView: View {
                         }
                         .aspectRatio(3 / 4, contentMode: .fit)
                         .padding(.horizontal, 8)
-                        .padding(.top, 8)
+                        .padding(.top, 4)
                         
+                        // Bench section
                         BenchSection(players: benchPlayers)
                             .padding(.horizontal, 12)
                             .padding(.top, 16)
@@ -67,14 +73,133 @@ struct TeamView: View {
                 .padding(.bottom, 20)
             }
             .navigationTitle("My Team")
+            .navigationBarTitleDisplayMode(.inline)
             .refreshable { await appState.refreshMyTeam() }
         }
     }
 }
 
-// MARK: - Pitch Container with full markings
+// MARK: - Chips Bar
+struct ChipsBarView: View {
+    @ObservedObject var appState: AppStateManager
+    @State private var showingChipAlert: String?
+    @State private var chipLoading = false
+    
+    var chips: [Chip] {
+        appState.chips
+    }
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ChipButton(
+                    name: "Triple Captain",
+                    icon: "star.fill",
+                    available: chipAvailable(type: "triple_captain"),
+                    active: chipActive(type: "triple_captain")
+                ) {
+                    showingChipAlert = "triple_captain"
+                }
+                
+                ChipButton(
+                    name: "Free Hit",
+                    icon: "bolt.fill",
+                    available: chipAvailable(type: "free_hit"),
+                    active: chipActive(type: "free_hit")
+                ) {
+                    showingChipAlert = "free_hit"
+                }
+                
+                ChipButton(
+                    name: "Bench Boost",
+                    icon: "person.3.fill",
+                    available: chipAvailable(type: "bench_boost"),
+                    active: chipActive(type: "bench_boost")
+                ) {
+                    showingChipAlert = "bench_boost"
+                }
+                
+                ChipButton(
+                    name: "Wildcard",
+                    icon: "wand.and.stars",
+                    available: chipAvailable(type: "wildcard"),
+                    active: chipActive(type: "wildcard")
+                ) {
+                    showingChipAlert = "wildcard"
+                }
+            }
+        }
+        .alert("Activate Chip?", isPresented: Binding(
+            get: { showingChipAlert != nil },
+            set: { if !$0 { showingChipAlert = nil } }
+        )) {
+            Button("Activate", role: .none) {
+                activateChip()
+            }
+            .tint(.green)
+            Button("Cancel", role: .cancel) { showingChipAlert = nil }
+        } message: {
+            if let type = showingChipAlert {
+                Text("Are you sure you want to activate \(type.replacingOccurrences(of: "_", with: " ").capitalized)? This cannot be undone.")
+            }
+        }
+    }
+    
+    private func chipAvailable(type: String) -> Bool {
+        chips.first(where: { $0.type == type })?.available ?? false
+    }
+    
+    private func chipActive(type: String) -> Bool {
+        chips.first(where: { $0.type == type })?.active ?? false
+    }
+    
+    private func activateChip() {
+        guard let type = showingChipAlert else { return }
+        chipLoading = true
+        Task {
+            do {
+                try await APIService.shared.activateChip(chipType: type)
+                await appState.loadAllData()
+                chipLoading = false
+            } catch {
+                chipLoading = false
+            }
+            showingChipAlert = nil
+        }
+    }
+}
 
-struct PitchContainer: View {
+struct ChipButton: View {
+    let name: String
+    let icon: String
+    let available: Bool
+    let active: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(active ? .yellow : (available ? .green : .secondary))
+                Text(name)
+                    .font(.caption2.bold())
+                    .foregroundColor(active ? .yellow : (available ? .white : .secondary))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(active ? Color.yellow.opacity(0.15) : (available ? Color.green.opacity(0.1) : Color.gray.opacity(0.1)))
+                    .stroke(active ? Color.yellow : (available ? Color.green : Color.gray.opacity(0.3)), lineWidth: 1)
+            )
+        }
+        .disabled(!available || active)
+    }
+}
+
+// MARK: - Half Pitch Container
+struct HalfPitchContainer: View {
     let geo: GeometryProxy
     let players: [SquadPlayer]
     let positions: [(x: CGFloat, y: CGFloat)]
@@ -85,25 +210,24 @@ struct PitchContainer: View {
         let w = geo.size.width
         let h = geo.size.height
         
-        // Inset for touchline border
         let margin: CGFloat = 6
         let pitchW = w - margin * 2
         let pitchH = h - margin * 2
         
         ZStack {
-            // Dark background behind touchline
+            // Dark background
             Color(red: 0.04, green: 0.25, blue: 0.12)
             
-            // Pitch surface with mowing stripes
+            // Pitch surface
             pitchSurface(width: pitchW, height: pitchH)
                 .frame(width: pitchW, height: pitchH)
                 .clipped()
             
-            // Pitch markings
-            pitchMarkings(width: pitchW, height: pitchH)
+            // Half pitch markings (top half only)
+            halfPitchMarkings(width: pitchW, height: pitchH)
                 .frame(width: pitchW, height: pitchH)
             
-            // Players positioned within the pitch area
+            // Players
             if !players.isEmpty {
                 playerOverlay(width: pitchW, height: pitchH)
             }
@@ -112,11 +236,9 @@ struct PitchContainer: View {
         .cornerRadius(8)
     }
     
-    // MARK: - Pitch surface with mowing stripes
-    
     @ViewBuilder
     private func pitchSurface(width: CGFloat, height: CGFloat) -> some View {
-        let stripeCount = 12
+        let stripeCount = 6
         let stripeH = height / CGFloat(stripeCount)
         let baseGreen = Color(red: 0.15, green: 0.45, blue: 0.22)
         let lightGreen = Color(red: 0.17, green: 0.50, blue: 0.25)
@@ -129,11 +251,9 @@ struct PitchContainer: View {
         }
     }
     
-    // MARK: - Pitch markings (complete: touchline, center circle, penalty areas, 6-yard boxes, corner arcs, penalty spots)
-    
     @ViewBuilder
-    private func pitchMarkings(width: CGFloat, height: CGFloat) -> some View {
-        let lineW: CGFloat = max(1, width / 200) // Scales with pitch size
+    private func halfPitchMarkings(width: CGFloat, height: CGFloat) -> some View {
+        let lineW: CGFloat = max(1, width / 200)
         let lineColor = Color.white.opacity(0.4)
         
         ZStack {
@@ -141,116 +261,64 @@ struct PitchContainer: View {
             RoundedRectangle(cornerRadius: 0)
                 .stroke(lineColor, lineWidth: lineW * 1.5)
             
-            // Halfway line
+            // Halfway line (bottom edge)
             Rectangle()
                 .fill(lineColor)
                 .frame(width: width, height: lineW)
-                .position(x: width / 2, y: height / 2)
+                .position(x: width / 2, y: height)
             
-            // Center circle
-            Circle()
+            // Center circle (half circle at bottom)
+            ArcShape(startAngle: 0, endAngle: 180)
                 .stroke(lineColor, lineWidth: lineW)
                 .frame(width: width * 0.2, height: width * 0.2)
-                .position(x: width / 2, y: height / 2)
+                .position(x: width / 2, y: height)
             
             // Center spot
             Circle()
                 .fill(lineColor)
                 .frame(width: lineW * 2, height: lineW * 2)
-                .position(x: width / 2, y: height / 2)
+                .position(x: width / 2, y: height - lineW)
             
-            // --- TOP HALF (attacking end) ---
+            // Penalty area (top)
+            Rectangle()
+                .stroke(lineColor, lineWidth: lineW)
+                .frame(width: width * 0.5, height: height * 0.13)
+                .position(x: width / 2, y: height * 0.065)
             
-            // Penalty area top
-            GeometryReader { _ in
-                Rectangle()
-                    .stroke(lineColor, lineWidth: lineW)
-                    .frame(width: width * 0.5, height: height * 0.13)
-                    .position(x: width / 2, y: height * 0.065)
-            }
+            // 6-yard/goal area (top)
+            Rectangle()
+                .stroke(lineColor, lineWidth: lineW)
+                .frame(width: width * 0.25, height: height * 0.06)
+                .position(x: width / 2, y: height * 0.03)
             
-            // 6-yard/goal area top
-            GeometryReader { _ in
-                Rectangle()
-                    .stroke(lineColor, lineWidth: lineW)
-                    .frame(width: width * 0.25, height: height * 0.06)
-                    .position(x: width / 2, y: height * 0.03)
-            }
-            
-            // Penalty spot top
+            // Penalty spot (top)
             Circle()
                 .fill(lineColor)
                 .frame(width: lineW * 1.5, height: lineW * 1.5)
                 .position(x: width / 2, y: height * 0.14)
             
-            // Penalty arc top (outside of penalty area)
+            // Penalty arc (top)
             ArcShape(startAngle: 180, endAngle: 360)
                 .stroke(lineColor, lineWidth: lineW)
                 .frame(width: width * 0.12, height: width * 0.06)
                 .position(x: width / 2, y: height * 0.13)
             
-            // Corner arcs top-left
+            // Corner arcs top
             ArcShape(startAngle: 0, endAngle: 90)
                 .stroke(lineColor, lineWidth: lineW)
                 .frame(width: width * 0.04, height: width * 0.04)
                 .position(x: width * 0.02, y: height * 0.02)
             
-            // Corner arcs top-right
             ArcShape(startAngle: 270, endAngle: 360)
                 .stroke(lineColor, lineWidth: lineW)
                 .frame(width: width * 0.04, height: width * 0.04)
                 .position(x: width * 0.98, y: height * 0.02)
-            
-            // --- BOTTOM HALF (defending end) ---
-            
-            // Penalty area bottom
-            GeometryReader { _ in
-                Rectangle()
-                    .stroke(lineColor, lineWidth: lineW)
-                    .frame(width: width * 0.5, height: height * 0.13)
-                    .position(x: width / 2, y: height * 0.935)
-            }
-            
-            // 6-yard/goal area bottom
-            GeometryReader { _ in
-                Rectangle()
-                    .stroke(lineColor, lineWidth: lineW)
-                    .frame(width: width * 0.25, height: height * 0.06)
-                    .position(x: width / 2, y: height * 0.97)
-            }
-            
-            // Penalty spot bottom
-            Circle()
-                .fill(lineColor)
-                .frame(width: lineW * 1.5, height: lineW * 1.5)
-                .position(x: width / 2, y: height * 0.86)
-            
-            // Penalty arc bottom (inside of penalty area)
-            ArcShape(startAngle: 0, endAngle: 180)
-                .stroke(lineColor, lineWidth: lineW)
-                .frame(width: width * 0.12, height: width * 0.06)
-                .position(x: width / 2, y: height * 0.87)
-            
-            // Corner arcs bottom-left
-            ArcShape(startAngle: 90, endAngle: 180)
-                .stroke(lineColor, lineWidth: lineW)
-                .frame(width: width * 0.04, height: width * 0.04)
-                .position(x: width * 0.02, y: height * 0.98)
-            
-            // Corner arcs bottom-right
-            ArcShape(startAngle: 180, endAngle: 270)
-                .stroke(lineColor, lineWidth: lineW)
-                .frame(width: width * 0.04, height: width * 0.04)
-                .position(x: width * 0.98, y: height * 0.98)
         }
     }
     
-    // MARK: - Player overlay
-    
     @ViewBuilder
     private func playerOverlay(width: CGFloat, height: CGFloat) -> some View {
-        // Offset players to sit within the pitch area (inside touchlines)
-        let playerMargin: CGFloat = 20
+        let playerMargin: CGFloat = 24
         let availW = width - playerMargin * 2
         let availH = height - playerMargin * 2
         
@@ -278,9 +346,135 @@ struct PitchContainer: View {
     }
 }
 
-// MARK: - Arc Shape for corner arcs and penalty arcs
+// MARK: - Player on Pitch
+struct PitchPlayerNode: View {
+    let player: SquadPlayer
+    let positionX: CGFloat
+    let positionY: CGFloat
+    let containerWidth: CGFloat
+    let containerHeight: CGFloat
+    let offsetX: CGFloat
+    let offsetY: CGFloat
+    let isCaptain: Bool
+    let isViceCaptain: Bool
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            // Jersey icon (larger)
+            ZStack(alignment: .topTrailing) {
+                JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 40)
+                    .frame(width: 44, height: 44)
+                
+                if isCaptain {
+                    Text("C")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(2.5)
+                        .background(Color.yellow)
+                        .clipShape(Circle())
+                } else if isViceCaptain {
+                    Text("VC")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(2.5)
+                        .background(Color.gray)
+                        .clipShape(Capsule())
+                }
+            }
+            
+            // Surname only
+            Text(surname(from: player.name))
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .frame(maxWidth: 48)
+        }
+        .position(
+            x: offsetX + containerWidth * positionX,
+            y: offsetY + containerHeight * positionY
+        )
+    }
+    
+    private func surname(from fullName: String) -> String {
+        let parts = fullName.split(separator: " ")
+        return parts.last?.description.capitalized ?? fullName
+    }
+}
 
-private struct ArcShape: Shape {
+// MARK: - Bench Section (centered, 3 players, same size as field)
+struct BenchSection: View {
+    let players: [SquadPlayer]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("BENCH")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.horizontal, 4)
+            
+            HStack(spacing: 16) {
+                if players.isEmpty {
+                    Text("No bench players")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                
+                ForEach(players) { player in
+                    BenchPlayerCard(player: player)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
+        }
+        .padding(12)
+        .background(Color(red: 0.08, green: 0.08, blue: 0.12))
+        .cornerRadius(12)
+    }
+}
+
+struct BenchPlayerCard: View {
+    let player: SquadPlayer
+    
+    var body: some View {
+        VStack(spacing: 3) {
+            Text("SUB")
+                .font(.system(size: 7, weight: .bold))
+                .foregroundColor(.secondary)
+            
+            JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 40)
+                .frame(width: 44, height: 44)
+            
+            Text(surname(from: player.name))
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .frame(maxWidth: 48)
+            
+            HStack(spacing: 3) {
+                Text(String(format: "%.0f", player.gwPoints ?? 0))
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.green)
+                
+                Text(String(format: "%.1fm", player.purchasePrice))
+                    .font(.system(size: 7))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(width: 60)
+        .padding(.vertical, 8)
+        .background(Color(red: 0.12, green: 0.12, blue: 0.18))
+        .cornerRadius(10)
+    }
+    
+    private func surname(from fullName: String) -> String {
+        let parts = fullName.split(separator: " ")
+        return parts.last?.description.capitalized ?? fullName
+    }
+}
+
+// MARK: - Arc Shape
+struct ArcShape: Shape {
     let startAngle: Double
     let endAngle: Double
     
@@ -296,150 +490,5 @@ private struct ArcShape: Shape {
             clockwise: false
         )
         return path
-    }
-}
-
-// MARK: - Player on Pitch
-
-struct PitchPlayerNode: View {
-    let player: SquadPlayer
-    let positionX: CGFloat
-    let positionY: CGFloat
-    let containerWidth: CGFloat
-    let containerHeight: CGFloat
-    let offsetX: CGFloat
-    let offsetY: CGFloat
-    let isCaptain: Bool
-    let isViceCaptain: Bool
-    
-    var body: some View {
-        VStack(spacing: 1) {
-            // Jersey icon with captain badge
-            ZStack(alignment: .topTrailing) {
-                JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 32)
-                    .frame(width: 36, height: 36)
-                
-                if isCaptain {
-                    Text("C")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.black)
-                        .padding(2)
-                        .background(Color.yellow)
-                        .clipShape(Circle())
-                } else if isViceCaptain {
-                    Text("VC")
-                        .font(.system(size: 6, weight: .bold))
-                        .foregroundColor(.black)
-                        .padding(2)
-                        .background(Color.gray)
-                        .clipShape(Capsule())
-                }
-            }
-            
-            // Player name
-            Text(player.name)
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .lineLimit(1)
-                .frame(maxWidth: 52)
-            
-            // Club name
-            Text(player.teamName)
-                .font(.system(size: 6))
-                .foregroundColor(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .lineLimit(1)
-                .frame(maxWidth: 42)
-            
-            // Points + Price
-            HStack(spacing: 3) {
-                Text(String(format: "%.0f", player.gwPoints ?? 0))
-                    .font(.system(size: 7, weight: .bold))
-                    .foregroundColor(.green)
-                
-                Text(String(format: "%.1fm", player.purchasePrice))
-                    .font(.system(size: 6))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-        }
-        .position(
-            x: offsetX + containerWidth * positionX,
-            y: offsetY + containerHeight * positionY
-        )
-    }
-}
-
-// MARK: - Bench Section
-
-struct BenchSection: View {
-    let players: [SquadPlayer]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("BENCH")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 4)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    if players.isEmpty {
-                        Text("No bench players")
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                    
-                    ForEach(players) { player in
-                        BenchPlayerCard(player: player)
-                    }
-                }
-                .padding(.horizontal, 4)
-            }
-        }
-        .padding(12)
-        .background(Color(red: 0.08, green: 0.08, blue: 0.12))
-        .cornerRadius(12)
-    }
-}
-
-struct BenchPlayerCard: View {
-    let player: SquadPlayer
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Text("SUB")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.secondary)
-            
-            JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 24)
-                .frame(width: 28, height: 28)
-            
-            Text(player.name)
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .frame(maxWidth: 50)
-            
-            Text(player.teamName)
-                .font(.system(size: 6))
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-                .frame(maxWidth: 40)
-            
-            HStack(spacing: 3) {
-                Text(String(format: "%.0f", player.gwPoints ?? 0))
-                    .font(.system(size: 7, weight: .bold))
-                    .foregroundColor(.green)
-                
-                Text(String(format: "%.1fm", player.purchasePrice))
-                    .font(.system(size: 6))
-                    .foregroundColor(.secondary)
-            }
-        }
-        .frame(width: 58)
-        .padding(.vertical, 6)
-        .background(Color(red: 0.12, green: 0.12, blue: 0.18))
-        .cornerRadius(8)
     }
 }

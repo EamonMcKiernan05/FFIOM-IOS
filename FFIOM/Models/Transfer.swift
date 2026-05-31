@@ -11,3 +11,17 @@ struct Chip: Codable, Identifiable, Hashable {
     var id: String { type }; let name: String; let description: String
     let used: Bool; let type: String; let active: Bool; let available: Bool
 }
+
+// Represents a pending transfer (player out → player in) before confirmation
+struct PendingTransfer: Identifiable, Hashable {
+    let id = UUID()
+    var playerOutId: Int?
+    var playerOut: Player?
+    var playerInId: Int
+    var playerIn: Player
+    
+    var priceChange: Double {
+        guard let outPrice = playerOut?.price else { return Double(playerIn.price) }
+        return playerIn.price - outPrice
+    }
+}

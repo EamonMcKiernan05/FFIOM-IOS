@@ -26,6 +26,7 @@ class AppStateManager: ObservableObject {
             group.addTask { do { let v = try await self.api.fetchFixtures(); await MainActor.run { self.fixtures = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchNotifications(); await MainActor.run { self.notifications = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchMyStats(); await MainActor.run { self.userStats = v } } catch {} }
+            group.addTask { do { let v = try await self.api.getChipStatus(); await MainActor.run { self.chips = v } } catch {} }
             await group.waitForAll()
         }
     }
@@ -34,4 +35,5 @@ class AppStateManager: ObservableObject {
     func refreshMyTeam() async { do { myTeam = try await api.fetchMyTeam() } catch {} }
     func refreshPlayers() async { do { availablePlayers = try await api.fetchPlayers() } catch {} }
     func refreshFixtures() async { do { fixtures = try await api.fetchFixtures() } catch {} }
+    func refreshChips() async { do { chips = try await api.getChipStatus() } catch {} }
 }
