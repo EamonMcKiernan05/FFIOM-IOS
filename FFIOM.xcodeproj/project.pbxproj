@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		012980DA300DF8651ABBE620 /* PlayersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36BE92E1EF4C5B407139BCC /* PlayersView.swift */; };
-		99520D62B921188050BF52D1 /* ClubKits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367EF70F7F8B19848BB684A8 /* ClubKits.swift */; };
-		DA5833E1B7BC508B12A51485 /* JerseyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12139318580B2B7955CD836 /* JerseyIconView.swift */; };
 		0B6EDF09358482B24E0C4FA2 /* GameweekBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF2E53B3878831DF245678C /* GameweekBanner.swift */; };
 		0C400E78BAD9066EC5F2CC8B /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1A24975AA906F2E831F70D /* Notification.swift */; };
 		0D2608BD53369BECBA0E4800 /* Gameweek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53269BA85732BBB2C3E55B10 /* Gameweek.swift */; };
@@ -30,6 +28,7 @@
 		8342210022AB6297DB152674 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC45EDE420E80DE59D7F6E5B /* HomeView.swift */; };
 		83A72396F03BD2490D32E399 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED90299C0E1E22345016D82 /* SettingsView.swift */; };
 		8748378683D123F0028FC8D6 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BC9B7F03DE069E959C6EF22 /* MainTabView.swift */; };
+		99520D62B921188050BF52D1 /* ClubKits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367EF70F7F8B19848BB684A8 /* ClubKits.swift */; };
 		9AF4064C1256F75FE15D8A56 /* FixtureRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681D78084A3003941A9EB6F7 /* FixtureRow.swift */; };
 		AF94E83A1D957FB71E8D452E /* Fixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297E7F97C1F44D4D3F041943 /* Fixture.swift */; };
 		B0D2622335B101494BF4A8D0 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504655EDD0DC597E58E0B6EC /* NotificationsView.swift */; };
@@ -38,6 +37,7 @@
 		B5BFD1BE1CBB30E7A3EC45E2 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 981E62DD564912E0E29CD306 /* Player.swift */; };
 		B65028CCC7AABFA10856C0FB /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D03B2BE03B6073B054EF04F /* LoadingView.swift */; };
 		CE7C0338F7D9630739368950 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FBD96D790023AF35ACC069A /* AuthManager.swift */; };
+		DA5833E1B7BC508B12A51485 /* JerseyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F12139318580B2B7955CD836 /* JerseyIconView.swift */; };
 		DD697014F1B662636AF4618A /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB67920D162642FD0F106F5 /* User.swift */; };
 		DEE551382128CA1E07F95946 /* RankingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAC27836B1E286AA603A8FD /* RankingsView.swift */; };
 		DFA6B697BD60CEDD0B70245F /* FixturesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0671E382828CBBEC77C76FF /* FixturesView.swift */; };
@@ -49,8 +49,6 @@
 
 /* Begin PBXFileReference section */
 		020CF98C1F418D4DA60F5D0B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		367EF70F7F8B19848BB684A8 /* ClubKits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubKits.swift; sourceTree = "<group>"; };
-		F12139318580B2B7955CD836 /* JerseyIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JerseyIconView.swift; sourceTree = "<group>"; };
 		02C93835C005F76E0F62068A /* DreamTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamTeamView.swift; sourceTree = "<group>"; };
 		0BC8A3BEA2FCE171A84A6B4A /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		0DE9B0F7840C36B40BA14EAB /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -58,10 +56,11 @@
 		1E877EE4760EE37ABCFFFBBA /* SquadPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadPlayer.swift; sourceTree = "<group>"; };
 		28553E9CEFB9AF0101D0406D /* AppStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateManager.swift; sourceTree = "<group>"; };
 		297E7F97C1F44D4D3F041943 /* Fixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fixture.swift; sourceTree = "<group>"; };
-		2BAD5E6426CF59A13CA3F55C /* FFIOM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FFIOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BAD5E6426CF59A13CA3F55C /* FFIOM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FFIOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2BC9B7F03DE069E959C6EF22 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		2F25C24944E4E799ACDEB120 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		30ECD01D10524D88BAECF8AE /* EmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyState.swift; sourceTree = "<group>"; };
+		367EF70F7F8B19848BB684A8 /* ClubKits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubKits.swift; sourceTree = "<group>"; };
 		3D03B2BE03B6073B054EF04F /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		3FBD96D790023AF35ACC069A /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		504655EDD0DC597E58E0B6EC /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
@@ -87,6 +86,7 @@
 		DC45EDE420E80DE59D7F6E5B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		DF5E3D9AB70D2E3DE4D586B3 /* TransfersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransfersView.swift; sourceTree = "<group>"; };
 		E937D889CA3EFAA9181C5005 /* LeaguesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaguesView.swift; sourceTree = "<group>"; };
+		F12139318580B2B7955CD836 /* JerseyIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JerseyIconView.swift; sourceTree = "<group>"; };
 		F94343F49548420AAC774C09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -402,9 +402,9 @@
 				378B35EED1D7D4C5338F05E8 /* Transfer.swift in Sources */,
 				B483BCEEA1E043CA5E1EC2B1 /* TransfersView.swift in Sources */,
 				DD697014F1B662636AF4618A /* User.swift in Sources */,
-							99520D62B921188050BF52D1 /* ClubKits.swift in Sources */,
+				99520D62B921188050BF52D1 /* ClubKits.swift in Sources */,
 				DA5833E1B7BC508B12A51485 /* JerseyIconView.swift in Sources */,
-);
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -417,6 +417,7 @@
 				ASSETCATALOG_COMPILER_LAUNCHSCREEN_STORYBOARD_COMPILATION_MODE = Enabled;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7729UBUJQX;
 				INFOPLIST_FILE = FFIOM/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -437,6 +438,7 @@
 				ASSETCATALOG_COMPILER_LAUNCHSCREEN_STORYBOARD_COMPILATION_MODE = Enabled;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7729UBUJQX;
 				INFOPLIST_FILE = FFIOM/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

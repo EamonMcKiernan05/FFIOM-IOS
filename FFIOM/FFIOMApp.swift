@@ -13,8 +13,7 @@ struct AppRouter: View {
     @StateObject private var apiService = APIService.shared
     @StateObject private var appState = AppStateManager()
     @StateObject private var authManager = AuthManager()
-    @State private var showAuth = false
-    @State private var checkedInitial = false
+    @State private var showAuth = true
     
     var body: some View {
         Group {
@@ -25,28 +24,28 @@ struct AppRouter: View {
             }
         }
         .task {
-            // Check initial auth state
-            let token = UserDefaults.standard.string(forKey: "authToken")
-            if let t = token, !t.isEmpty {
-                apiService.authToken = t
+            // Restore saved token if present
+            if let token = UserDefaults.standard.string(forKey: "authToken"), !token.isEmpty {
+                apiService.authToken = token
                 if let uid = UserDefaults.standard.string(forKey: "userId") {
                     apiService.currentUserId = Int(uid)
                 }
                 if let tid = UserDefaults.standard.string(forKey: "teamId") {
                     apiService.currentTeamId = Int(tid)
                 }
-                authManager.isAuthenticated = true
-                showAuth = false
-            } else {
-                showAuth = true
+                
+                // Validate token is still alive before skipping login
+                let isValid = await apiService.refreshSession()
+                if isValid {
+                    authManager.isAuthenticated = true
+                    showAuth = false
+                }
+                // If expired, showAuth stays true → shows login screen
             }
-            checkedInitial = true
         }
         .onChange(of: authManager.isAuthenticated) { newValue in
             if newValue {
                 showAuth = false
-            } else if checkedInitial {
-                showAuth = true
             }
         }
     }
