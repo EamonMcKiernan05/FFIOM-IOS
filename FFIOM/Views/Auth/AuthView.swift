@@ -72,6 +72,7 @@ struct UITextFieldWrapper: UIViewRepresentable {
 
 struct AuthView: View {
     @ObservedObject var authManager: AuthManager
+    var onLoginSuccess: (() -> Void)?
     @State private var showLogin = true
     @State private var username = ""
     @State private var password = ""
@@ -96,11 +97,11 @@ struct AuthView: View {
                         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
                         .overlay {
                             if showLogin {
-                                LoginView(username: $username, password: $password, authManager: authManager) {
+                                LoginView(username: $username, password: $password, authManager: authManager, onLoginSuccess: onLoginSuccess) {
                                     if let e = authManager.errorMessage { alertMessage = e; showAlert = true }
                                 }
                             } else {
-                                RegisterView(username: $username, password: $password, email: $email, authManager: authManager) {
+                                RegisterView(username: $username, password: $password, email: $email, authManager: authManager, onLoginSuccess: onLoginSuccess) {
                                     if let e = authManager.errorMessage { alertMessage = e; showAlert = true }
                                 }
                             }
@@ -125,6 +126,7 @@ struct LoginView: View {
     @Binding var username: String
     @Binding var password: String
     @ObservedObject var authManager: AuthManager
+    var onLoginSuccess: (() -> Void)?
     var onSubmit: () -> Void
     
     var body: some View {
@@ -150,7 +152,13 @@ struct LoginView: View {
         }
         Task {
             let ok = await authManager.login(username: username, password: password)
-            if !ok { onSubmit() }
+            if ok {
+                print("✅ LoginView: login succeeded, calling onLoginSuccess")
+                onLoginSuccess?()
+            } else {
+                print("❌ LoginView: login failed")
+                onSubmit()
+            }
         }
     }
 }
@@ -160,6 +168,7 @@ struct RegisterView: View {
     @Binding var password: String
     @Binding var email: String
     @ObservedObject var authManager: AuthManager
+    var onLoginSuccess: (() -> Void)?
     var onSubmit: () -> Void
     
     var body: some View {
@@ -187,7 +196,13 @@ struct RegisterView: View {
         }
         Task {
             let ok = await authManager.register(username: username, password: password, email: email)
-            if !ok { onSubmit() }
+            if ok {
+                print("✅ RegisterView: register succeeded, calling onLoginSuccess")
+                onLoginSuccess?()
+            } else {
+                print("❌ RegisterView: register failed")
+                onSubmit()
+            }
         }
     }
 }

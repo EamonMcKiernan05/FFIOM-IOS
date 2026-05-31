@@ -9,8 +9,7 @@ class AuthManager: ObservableObject {
     private let api = APIService.shared
 
     init() {
-        let token = UserDefaults.standard.string(forKey: "authToken")
-        isAuthenticated = token != nil && (token?.isEmpty ?? true) == false
+        print("🔐 AuthManager init")
     }
 
     func login(username: String, password: String) async -> Bool {
@@ -20,9 +19,12 @@ class AuthManager: ObservableObject {
         guard !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Please enter a password"; isLoading = false; return false
         }
-        isLoading = true; errorMessage = nil
+        print("🔐 AuthManager.login: START username=\(username)")
+        isLoading = true
+        errorMessage = nil
         do {
             let resp: AuthResponse = try await api.login(username: username, password: password)
+            print("🔐 AuthManager.login: API success, user.id=\(resp.user.id)")
             currentUser = User(
                 id: resp.user.id,
                 username: resp.user.username,
@@ -37,10 +39,12 @@ class AuthManager: ObservableObject {
             )
             isAuthenticated = true
             isLoading = false
+            print("🔐 AuthManager.login: COMPLETE isAuthenticated=true")
             return true
         } catch {
             errorMessage = error.localizedDescription
             isLoading = false
+            print("🔐 AuthManager.login: FAILED - \(error.localizedDescription)")
             return false
         }
     }
@@ -52,7 +56,8 @@ class AuthManager: ObservableObject {
         guard !password.isEmpty else {
             errorMessage = "Please enter a password"; isLoading = false; return false
         }
-        isLoading = true; errorMessage = nil
+        isLoading = true
+        errorMessage = nil
         do {
             let resp: AuthResponse = try await api.register(username: username, password: password, email: email)
             currentUser = User(
@@ -83,8 +88,12 @@ class AuthManager: ObservableObject {
         isAuthenticated = false
     }
 
-    func refreshSession() async {
-        let valid = await api.refreshSession(); isAuthenticated = valid
-        if valid { do { currentUser = try await api.fetchMyStats() } catch {} }
+    func refreshSession() async -> Bool {
+        let valid = await api.refreshSession()
+        isAuthenticated = valid
+        if valid {
+            do { currentUser = try await api.fetchMyStats() } catch { }
+        }
+        return valid
     }
 }

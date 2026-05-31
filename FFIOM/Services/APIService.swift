@@ -25,6 +25,7 @@ class APIService: ObservableObject {
 
     func request<T: Codable>(endpoint: String, method: String = "GET",
                              body: Encodable? = nil, responseType: T.Type) async throws -> T {
+        print("🌐 API: \(method) \(endpoint)")
         guard let uc = URLComponents(string: "\(baseURL)\(endpoint)") else { throw APIError.invalidURL }
         var req = URLRequest(url: uc.url!); req.httpMethod = method; req.allHTTPHeaderFields = headers()
         if let body = body { req.httpBody = try? JSONEncoder().encode(body) }
