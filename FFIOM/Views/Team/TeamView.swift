@@ -57,7 +57,8 @@ struct TeamView: View {
                                 players: startingPlayers,
                                 positions: formationPositions,
                                 captainId: appState.myTeam.first(where: { $0.isCaptain })?.id,
-                                viceCaptainId: appState.myTeam.first(where: { $0.isViceCaptain })?.id
+                                viceCaptainId: appState.myTeam.first(where: { $0.isViceCaptain })?.id,
+                                appState: appState
                             )
                         }
                         .frame(height: UIScreen.main.bounds.height - 260)
@@ -205,6 +206,7 @@ struct HalfPitchContainer: View {
     let positions: [(x: CGFloat, y: CGFloat)]
     let captainId: Int?
     let viceCaptainId: Int?
+    let appState: AppStateManager
     
     var body: some View {
         let w = geo.size.width
@@ -338,7 +340,8 @@ struct HalfPitchContainer: View {
                         offsetX: playerMargin,
                         offsetY: playerMargin,
                         isCaptain: isCaptain,
-                        isViceCaptain: isViceCaptain
+                        isViceCaptain: isViceCaptain,
+                        appState: appState
                     )
                 }
             }
@@ -357,6 +360,11 @@ struct PitchPlayerNode: View {
     let offsetY: CGFloat
     let isCaptain: Bool
     let isViceCaptain: Bool
+    @ObservedObject var appState: AppStateManager
+    
+    var benchPlayers: [SquadPlayer] {
+        appState.myTeam.filter { !$0.isStarting }
+    }
     
     var body: some View {
         VStack(spacing: 2) {
@@ -396,14 +404,32 @@ struct PitchPlayerNode: View {
         )
         .contextMenu {
             if !isCaptain {
-                Button("Make Captain", systemImage: "star.fill") {}
+                Button("Make Captain", systemImage: "star.fill") {
+                    Task {
+                        try? await APIService.shared.setCaptain(squadId: player.id)
+                        await appState.refreshMyTeam()
+                    }
+                }
             }
             if !isViceCaptain {
-                Button("Make Vice-Captain", systemImage: "star") {}
+                Button("Make Vice-Captain", systemImage: "star") {
+                    Task {
+                        try? await APIService.shared.setViceCaptain(squadId: player.id)
+                        await appState.refreshMyTeam()
+                    }
+                }
             }
             Divider()
             Section("Swap with Bench") {
-                Text("Coming soon")
+                if benchPlayers.isEmpty {
+                    Text("No bench players available")
+                        .foregroundColor(.secondary)
+                }
+                ForEach(benchPlayers) { bp in
+                    Button("Swap with \(surname(from: bp.name))", systemImage: "arrow.left.arrow.right") {
+                        print("Swap \(player.name) with \(bp.name)")
+                    }
+                }
             }
         }
     }
