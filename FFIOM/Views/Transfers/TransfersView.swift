@@ -6,21 +6,25 @@ import SwiftUI
 struct TransfersView: View {
     @ObservedObject var appState: AppStateManager
     
-    // 4-5-4 formation for transfers (10 outfield players on field)
+    // 4-4-4 + GK = 13 players for transfers
     private let transferFormationPositions: [(x: CGFloat, y: CGFloat)] = [
-        // 4 Forwards
-        (x: 0.50, y: 0.06),
-        (x: 0.30, y: 0.10),
-        (x: 0.20, y: 0.12),
-        (x: 0.70, y: 0.10),
+        // Goalkeeper
+        (x: 0.50, y: 0.90),
+        // 4 Defenders
+        (x: 0.15, y: 0.72),
+        (x: 0.38, y: 0.70),
+        (x: 0.62, y: 0.70),
+        (x: 0.85, y: 0.72),
         // 4 Midfielders
-        (x: 0.15, y: 0.34),
-        (x: 0.35, y: 0.32),
-        (x: 0.65, y: 0.32),
-        (x: 0.85, y: 0.34),
-        // 2 Defenders
-        (x: 0.35, y: 0.60),
-        (x: 0.65, y: 0.60),
+        (x: 0.15, y: 0.48),
+        (x: 0.38, y: 0.46),
+        (x: 0.62, y: 0.46),
+        (x: 0.85, y: 0.48),
+        // 4 Forwards
+        (x: 0.15, y: 0.22),
+        (x: 0.38, y: 0.18),
+        (x: 0.62, y: 0.18),
+        (x: 0.85, y: 0.22),
     ]
     
     @State private var selectedPlayer: SquadPlayer?
@@ -28,9 +32,10 @@ struct TransfersView: View {
     @State private var pendingTransfers: [PendingTransfer] = []
     @State private var confirmError: String?
     @State private var showAlert = false
+    @State private var transferOutPlayer: SquadPlayer?
     
     var allSquadPlayers: [SquadPlayer] {
-        Array(appState.myTeam.filter { $0.isStarting }.prefix(10))
+        Array(appState.myTeam.prefix(13))
     }
     
     var hasPendingTransfers: Bool {
@@ -103,8 +108,9 @@ struct TransfersView: View {
                     }
                     
                     // Add first player option
-                    if appState.myTeam.count < 10 {
+                    if appState.myTeam.count < 13 {
                         Button {
+                            transferOutPlayer = nil
                             showingTransferIn = true
                         } label: {
                             HStack {
@@ -139,7 +145,7 @@ struct TransfersView: View {
                 TransferInListView(
                     appState: appState,
                     pendingTransfers: $pendingTransfers,
-                    playerOut: nil
+                    playerOut: transferOutPlayer
                 )
             }
             .alert("Transfer Error", isPresented: $showAlert) {
@@ -298,7 +304,7 @@ struct TransferPlayerNode: View {
                         .clipShape(Circle())
                         .offset(x: 14, y: -14)
                 }
-                Text(player.name.surname)
+                Text(surname(player.name))
                     .font(.system(size: 9, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -307,6 +313,11 @@ struct TransferPlayerNode: View {
         }
         .buttonStyle(.plain)
         .position(x: offsetX + containerWidth * positionX, y: offsetY + containerHeight * positionY)
+    }
+    
+    private func surname(_ name: String) -> String {
+        let parts = name.split(separator: " ")
+        return parts.last?.description.capitalized ?? name
     }
 }
 
@@ -482,8 +493,8 @@ struct PlayerTransferOverlay: View {
                             )
                         )
                         pendingTransfers.append(pending)
-                        dismiss()
                         showingTransferIn = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { dismiss() }
                     } label: {
                         Text("Transfer Player")
                             .frame(maxWidth: .infinity)

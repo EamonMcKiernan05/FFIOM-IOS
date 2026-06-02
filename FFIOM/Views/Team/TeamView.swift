@@ -60,7 +60,7 @@ struct TeamView: View {
                                 viceCaptainId: appState.myTeam.first(where: { $0.isViceCaptain })?.id
                             )
                         }
-                        .aspectRatio(3 / 4, contentMode: .fit)
+                        .frame(height: UIScreen.main.bounds.height - 260)
                         .padding(.horizontal, 8)
                         .padding(.top, 4)
                         
@@ -394,6 +394,18 @@ struct PitchPlayerNode: View {
             x: offsetX + containerWidth * positionX,
             y: offsetY + containerHeight * positionY
         )
+        .contextMenu {
+            if !isCaptain {
+                Button("Make Captain", systemImage: "star.fill") {}
+            }
+            if !isViceCaptain {
+                Button("Make Vice-Captain", systemImage: "star") {}
+            }
+            Divider()
+            Section("Swap with Bench") {
+                Text("Coming soon")
+            }
+        }
     }
     
     private func surname(from fullName: String) -> String {
@@ -482,6 +494,7 @@ struct ArcShape: Shape {
         var path = Path()
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let radius = min(rect.width, rect.height) / 2
+        guard radius > 0, radius.isFinite else { return path }
         path.addArc(
             center: center,
             radius: radius,

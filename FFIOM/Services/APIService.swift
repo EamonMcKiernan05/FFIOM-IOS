@@ -32,7 +32,7 @@ class APIService: ObservableObject {
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let hr = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         guard (200...299).contains(hr.statusCode) else {
-            if hr.statusCode == 401 { await logout() }
+            if hr.statusCode == 401 { logout() }
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.httpError(hr.statusCode, msg)
         }
@@ -140,12 +140,12 @@ class APIService: ObservableObject {
 
     func setCaptain(squadId: Int) async throws {
         guard let tid = currentTeamId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(tid)/captain/\(squadId)", method: "POST", responseType: Bool.self)
+        _ = try await request(endpoint: "/api/users/\(tid)/captain/\(squadId)", method: "POST", responseType: Bool.self)
     }
 
     func setViceCaptain(squadId: Int) async throws {
         guard let tid = currentTeamId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(tid)/vice-captain/\(squadId)", method: "POST", responseType: Bool.self)
+        _ = try await request(endpoint: "/api/users/\(tid)/vice-captain/\(squadId)", method: "POST", responseType: Bool.self)
     }
 
     // MARK: - Transfers
@@ -156,26 +156,26 @@ class APIService: ObservableObject {
             let user_id: Int; let player_in_id: Int?; let player_out_id: Int?
         }
         let body = TransferBody(user_id: uid, player_in_id: playerInId, player_out_id: playerOutId)
-        try await request(endpoint: "/api/transfers/player", method: "POST", body: body, responseType: Bool.self)
+        _ = try await request(endpoint: "/api/transfers/player", method: "POST", body: body, responseType: Bool.self)
     }
 
     // MARK: - Players
 
     func fetchPlayers(sortBy: String = "goals", search: String? = nil) async throws -> [Player] {
-        var ep = "/api/players/?order_by=\(sortBy)"
-        if let s = search { ep += "&search=\(s)" }
-        return try await request(endpoint: ep, responseType: [Player].self)
+        var endpoint = "/api/players/?order_by=\(sortBy)"
+        if let s = search { endpoint += "&search=\(s)" }
+        return try await request(endpoint: endpoint, responseType: [Player].self)
     }
 
     func fetchRankings(sortBy: String = "points") async throws -> [Player] {
-        var ep = "/api/players/rankings?sort_by=\(sortBy)"
+        let ep = "/api/players/rankings?sort_by=\(sortBy)"
         return try await request(endpoint: ep, responseType: [Player].self)
     }
 
     func fetchTopPlayers(gameweek: Int? = nil, limit: Int = 20) async throws -> [Player] {
-        var ep = "/api/players/top?limit=\(limit)"
-        if let gw = gameweek { ep += "&gameweek_id=\(gw)" }
-        return try await request(endpoint: ep, responseType: [Player].self)
+        var endpoint = "/api/players/top?limit=\(limit)"
+        if let gw = gameweek { endpoint += "&gameweek_id=\(gw)" }
+        return try await request(endpoint: endpoint, responseType: [Player].self)
     }
 
     // MARK: - Fixtures (returns {fixtures: [...]})
@@ -209,7 +209,7 @@ class APIService: ObservableObject {
 
     func activateChip(chipType: String) async throws {
         guard let tid = currentTeamId else { throw APIError.notAuthenticated }
-        try await request(endpoint: "/api/users/\(tid)/chips/activate/\(chipType)", method: "POST", responseType: Bool.self)
+        _ = try await request(endpoint: "/api/users/\(tid)/chips/activate/\(chipType)", method: "POST", responseType: Bool.self)
     }
 
     // MARK: - Stubs
