@@ -2,12 +2,12 @@ import SwiftUI
 
 // MARK: - Team View - Pitch Layout
 // Half-pitch with 3-4-3 formation, chip activation bar, centered bench
+// Fixed: fits on one screen, tap popup for captain/subs, sheet for chips
 
 struct TeamView: View {
     @ObservedObject var appState: AppStateManager
     
     // Formation positions for 3-4-3 (top-down, half pitch)
-    // x: horizontal (0=left, 1=right), y: vertical (0=attacking end, 1=defending end)
     private let formationPositions: [(x: CGFloat, y: CGFloat)] = [
         // 3 Forwards (attacking end)
         (x: 0.50, y: 0.08),   // Center forward
@@ -34,7 +34,11 @@ struct TeamView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
+            GeometryReader { geo in
+                let availableHeight = geo.size.height
+                // Reserve space for: chips bar (~70), bench (~100), padding (~60) = ~230
+                let pitchHeight = max(280, availableHeight - 230)
+                
                 VStack(spacing: 0) {
                     // Chip activation bar
                     ChipsBarView(appState: appState)
@@ -49,8 +53,9 @@ struct TeamView: View {
                             message: "Your squad is empty. Set up your team from the Transfers tab."
                         )
                         .padding(.top, 40)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        // Half pitch
+                        // Half pitch - fixed height, no scroll
                         GeometryReader { geo in
                             HalfPitchContainer(
                                 geo: geo,
@@ -61,21 +66,27 @@ struct TeamView: View {
                                 appState: appState
                             )
                         }
-                        .frame(height: UIScreen.main.bounds.height - 260)
+                        .frame(height: pitchHeight)
                         .padding(.horizontal, 8)
                         .padding(.top, 4)
                         
                         // Bench section
                         BenchSection(players: benchPlayers)
                             .padding(.horizontal, 12)
-                            .padding(.top, 16)
+                            .padding(.top, 12)
                     }
                 }
-                .padding(.bottom, 20)
+                .padding(.bottom, 12)
             }
             .navigationTitle("My Team")
             .navigationBarTitleDisplayMode(.inline)
-            .refreshable { await appState.refreshMyTeam() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { Task { await appState.refreshMyTeam() } }) {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+            }
         }
     }
 }
@@ -83,8 +94,8 @@ struct TeamView: View {
 // MARK: - Chips Bar
 struct ChipsBarView: View {
     @ObservedObject var appState: AppStateManager
-    @State private var showingChipAlert: String?
-    @State private var chipLoading = false
+    @State private var showingChipSheet = false
+    @State private var selectedChipType: String?
     
     var chips: [Chip] {
         appState.chips
@@ -99,7 +110,8 @@ struct ChipsBarView: View {
                     available: chipAvailable(type: "triple_captain"),
                     active: chipActive(type: "triple_captain")
                 ) {
-                    showingChipAlert = "triple_captain"
+                    selectedChipType = "triple_captain"
+                    showingChipSheet = true
                 }
                 
                 ChipButton(
@@ -108,7 +120,8 @@ struct ChipsBarView: View {
                     available: chipAvailable(type: "free_hit"),
                     active: chipActive(type: "free_hit")
                 ) {
-                    showingChipAlert = "free_hit"
+                    selectedChipType = "free_hit"
+                    showingChipSheet = true
                 }
                 
                 ChipButton(
@@ -117,7 +130,8 @@ struct ChipsBarView: View {
                     available: chipAvailable(type: "bench_boost"),
                     active: chipActive(type: "bench_boost")
                 ) {
-                    showingChipAlert = "bench_boost"
+                    selectedChipType = "bench_boost"
+                    showingChipSheet = true
                 }
                 
                 ChipButton(
@@ -126,22 +140,14 @@ struct ChipsBarView: View {
                     available: chipAvailable(type: "wildcard"),
                     active: chipActive(type: "wildcard")
                 ) {
-                    showingChipAlert = "wildcard"
+                    selectedChipType = "wildcard"
+                    showingChipSheet = true
                 }
             }
         }
-        .alert("Activate Chip?", isPresented: Binding(
-            get: { showingChipAlert != nil },
-            set: { if !$0 { showingChipAlert = nil } }
-        )) {
-            Button("Activate", role: .none) {
-                activateChip()
-            }
-            .tint(.green)
-            Button("Cancel", role: .cancel) { showingChipAlert = nil }
-        } message: {
-            if let type = showingChipAlert {
-                Text("Are you sure you want to activate \(type.replacingOccurrences(of: "_", with: " ").capitalized)? This cannot be undone.")
+        .sheet(isPresented: $showingChipSheet) {
+            if let chipType = selectedChipType {
+                ChipConfirmSheet(chipType: chipType, appState: appState)
             }
         }
     }
@@ -153,19 +159,95 @@ struct ChipsBarView: View {
     private func chipActive(type: String) -> Bool {
         chips.first(where: { $0.type == type })?.active ?? false
     }
+}
+
+// MARK: - Chip Confirmation Sheet
+struct ChipConfirmSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let chipType: String
+    @ObservedObject var appState: AppStateManager
+    @State private var loading = false
+    
+    var chipName: String {
+        switch chipType {
+        case "triple_captain": return "Triple Captain"
+        case "free_hit": return "Free Hit"
+        case "bench_boost": return "Bench Boost"
+        case "wildcard": return "Wildcard"
+        default: return chipType.replacingOccurrences(of: "_", with: " ").capitalized
+        }
+    }
+    
+    var chipDescription: String {
+        let chip = appState.chips.first(where: { $0.type == chipType })
+        return chip?.description ?? "Activate this chip for the current gameweek."
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(spacing: 12) {
+                        switch chipType {
+                        case "triple_captain":
+                            Image(systemName: "star.fill").font(.system(size: 40)).foregroundColor(.yellow)
+                        case "free_hit":
+                            Image(systemName: "bolt.fill").font(.system(size: 40)).foregroundColor(.orange)
+                        case "bench_boost":
+                            Image(systemName: "person.3.fill").font(.system(size: 40)).foregroundColor(.green)
+                        case "wildcard":
+                            Image(systemName: "wand.and.stars").font(.system(size: 40)).foregroundColor(.purple)
+                        default:
+                            Image(systemName: "star.fill").font(.system(size: 40)).foregroundColor(.blue)
+                        }
+                        Text(chipName).font(.title2.bold())
+                        Text(chipDescription).font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
+                    }
+                    .padding(.vertical, 16)
+                } header: {
+                    Text("Activate Chip")
+                }
+                
+                Section {
+                    Text("This chip will be activated for the current gameweek. This cannot be undone.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Section {
+                    Button(action: activateChip) {
+                        HStack {
+                            Spacer()
+                            if loading {
+                                ProgressView()
+                            } else {
+                                Text("Activate \(chipName)")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(loading)
+                    .listRowBackground(Color.green.opacity(0.1))
+                    
+                    Button("Cancel", role: .cancel) { dismiss() }
+                }
+            }
+            .navigationTitle(chipName)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
     
     private func activateChip() {
-        guard let type = showingChipAlert else { return }
-        chipLoading = true
+        loading = true
         Task {
             do {
-                try await APIService.shared.activateChip(chipType: type)
+                try await APIService.shared.activateChip(chipType: chipType)
                 await appState.loadAllData()
-                chipLoading = false
+                dismiss()
             } catch {
-                chipLoading = false
+                print("Chip activation error: \(error.localizedDescription)")
             }
-            showingChipAlert = nil
+            loading = false
         }
     }
 }
@@ -195,7 +277,7 @@ struct ChipButton: View {
                     .stroke(active ? Color.yellow : (available ? Color.green : Color.gray.opacity(0.3)), lineWidth: 1)
             )
         }
-        .disabled(!available || active)
+        .disabled(!available && !active)
     }
 }
 
@@ -211,7 +293,6 @@ struct HalfPitchContainer: View {
     var body: some View {
         let w = geo.size.width
         let h = geo.size.height
-        
         let margin: CGFloat = 6
         let pitchW = w - margin * 2
         let pitchH = h - margin * 2
@@ -362,6 +443,8 @@ struct PitchPlayerNode: View {
     let isViceCaptain: Bool
     @ObservedObject var appState: AppStateManager
     
+    @State private var showingPlayerMenu = false
+    
     var benchPlayers: [SquadPlayer] {
         appState.myTeam.filter { !$0.isStarting }
     }
@@ -402,36 +485,184 @@ struct PitchPlayerNode: View {
             x: offsetX + containerWidth * positionX,
             y: offsetY + containerHeight * positionY
         )
-        .contextMenu {
-            if !isCaptain {
-                Button("Make Captain", systemImage: "star.fill") {
-                    Task {
-                        try? await APIService.shared.setCaptain(squadId: player.id)
-                        await appState.refreshMyTeam()
+        .onTapGesture {
+            showingPlayerMenu = true
+        }
+        .sheet(isPresented: $showingPlayerMenu) {
+            PlayerActionSheet(
+                player: player,
+                benchPlayers: benchPlayers,
+                isCaptain: isCaptain,
+                isViceCaptain: isViceCaptain,
+                appState: appState
+            )
+        }
+    }
+    
+    private func surname(from fullName: String) -> String {
+        let parts = fullName.split(separator: " ")
+        return parts.last?.description.capitalized ?? fullName
+    }
+}
+
+// MARK: - Player Action Sheet (popup menu on tap)
+struct PlayerActionSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let player: SquadPlayer
+    let benchPlayers: [SquadPlayer]
+    let isCaptain: Bool
+    let isViceCaptain: Bool
+    @ObservedObject var appState: AppStateManager
+    @State private var actionLoading = false
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text(player.name)) {
+                    HStack(spacing: 12) {
+                        JerseyIconView(teamId: player.player.teamId, teamName: player.teamName, size: 44)
+                            .frame(width: 44, height: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(player.teamName)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            HStack(spacing: 8) {
+                                if isCaptain {
+                                    Label("Captain", systemImage: "star.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.yellow)
+                                }
+                                if isViceCaptain {
+                                    Label("Vice-Captain", systemImage: "star")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(String(format: "%.0f", player.gwPoints ?? 0))
+                                .font(.headline)
+                                .foregroundColor(.green)
+                            Text("GW Points")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Section("Captaincy") {
+                    if !isCaptain {
+                        Button(action: makeCaptain) {
+                            HStack {
+                                Label("Make Captain", systemImage: "star.fill")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                            }
+                        }
+                        .listRowBackground(Color.yellow.opacity(0.1))
+                    } else {
+                        HStack {
+                            Label("Current Captain", systemImage: "checkmark.circle.fill")
+                                .foregroundColor(.yellow)
+                            Spacer()
+                        }
+                    }
+                    
+                    if !isViceCaptain {
+                        Button(action: makeViceCaptain) {
+                            HStack {
+                                Label("Make Vice-Captain", systemImage: "star")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                            }
+                        }
+                        .listRowBackground(Color.gray.opacity(0.1))
+                    } else {
+                        HStack {
+                            Label("Current Vice-Captain", systemImage: "checkmark.circle.fill")
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                    }
+                }
+                
+                Section("Swap with Bench") {
+                    if benchPlayers.isEmpty {
+                        HStack {
+                            Text("No bench players available")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                    }
+                    ForEach(benchPlayers) { bp in
+                        Button(action: { swapWith(bp) }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(surname(from: bp.name))
+                                        .font(.subheadline)
+                                    Text("Bench")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(String(format: "%.0f", bp.gwPoints ?? 0))
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                    Image(systemName: "arrow.left.arrow.right")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
                     }
                 }
             }
-            if !isViceCaptain {
-                Button("Make Vice-Captain", systemImage: "star") {
-                    Task {
-                        try? await APIService.shared.setViceCaptain(squadId: player.id)
-                        await appState.refreshMyTeam()
-                    }
-                }
-            }
-            Divider()
-            Section("Swap with Bench") {
-                if benchPlayers.isEmpty {
-                    Text("No bench players available")
-                        .foregroundColor(.secondary)
-                }
-                ForEach(benchPlayers) { bp in
-                    Button("Swap with \(surname(from: bp.name))", systemImage: "arrow.left.arrow.right") {
-                        print("Swap \(player.name) with \(bp.name)")
-                    }
+            .navigationTitle("Player Actions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
         }
+    }
+    
+    private func makeCaptain() {
+        actionLoading = true
+        Task {
+            do {
+                try await APIService.shared.setCaptain(squadId: player.id)
+                await appState.refreshMyTeam()
+                dismiss()
+            } catch {
+                print("Set captain error: \(error.localizedDescription)")
+            }
+            actionLoading = false
+        }
+    }
+    
+    private func makeViceCaptain() {
+        actionLoading = true
+        Task {
+            do {
+                try await APIService.shared.setViceCaptain(squadId: player.id)
+                await appState.refreshMyTeam()
+                dismiss()
+            } catch {
+                print("Set vice-captain error: \(error.localizedDescription)")
+            }
+            actionLoading = false
+        }
+    }
+    
+    private func swapWith(_ benchPlayer: SquadPlayer) {
+        print("Swap \(player.name) with \(benchPlayer.name)")
+        dismiss()
     }
     
     private func surname(from fullName: String) -> String {

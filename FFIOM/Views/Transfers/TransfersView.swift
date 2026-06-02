@@ -2,6 +2,7 @@ import SwiftUI
 
 // MARK: - Transfers View
 // Pitch layout with 4-5-4 formation, player overlay, transfer flow
+// Fixed: PlayerTransferOverlay navigates within NavigationStack instead of double-sheet
 
 struct TransfersView: View {
     @ObservedObject var appState: AppStateManager
@@ -389,12 +390,15 @@ struct TransferConfirmSection: View {
 }
 
 // MARK: - Player Transfer Overlay
+// FIXED: Uses navigation within NavigationStack instead of double-sheet
 struct PlayerTransferOverlay: View {
     @Environment(\.dismiss) private var dismiss
     let player: SquadPlayer
     @ObservedObject var appState: AppStateManager
     @Binding var pendingTransfers: [PendingTransfer]
-    @State private var showingTransferIn = false
+    
+    // Navigation state - pushes TransferInListView within the same sheet
+    @State private var showTransferInList = false
     
     var currentGW: Int {
         appState.gameweek?.displayNumber ?? 0
@@ -473,6 +477,7 @@ struct PlayerTransferOverlay: View {
                 // Transfer button
                 Section {
                     Button {
+                        // Create pending transfer with placeholder player in
                         let pending = PendingTransfer(
                             playerOutId: player.id,
                             playerOut: Player(
@@ -493,8 +498,8 @@ struct PlayerTransferOverlay: View {
                             )
                         )
                         pendingTransfers.append(pending)
-                        showingTransferIn = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { dismiss() }
+                        // Navigate to player selection WITHIN this NavigationStack
+                        showTransferInList = true
                     } label: {
                         Text("Transfer Player")
                             .frame(maxWidth: .infinity)
@@ -510,7 +515,8 @@ struct PlayerTransferOverlay: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showingTransferIn) {
+            // Navigate to TransferInListView within the same NavigationStack
+            .navigationDestination(isPresented: $showTransferInList) {
                 TransferInListView(
                     appState: appState,
                     pendingTransfers: $pendingTransfers,
@@ -577,89 +583,87 @@ struct TransferInListView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Sort By") {
-                    ForEach(SortOption.allCases, id: \.self) { option in
-                        HStack {
-                            Text(option.rawValue)
-                            Spacer()
-                            if sortBy == option {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.green)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture { sortBy = option }
-                    }
-                }
-                
-                Section("Filters") {
+        List {
+            Section("Sort By") {
+                ForEach(SortOption.allCases, id: \.self) { option in
                     HStack {
-                        Button("All Clubs") { selectedClub = nil }
-                            .buttonStyle(.bordered)
-                            .tint(selectedClub == nil ? .green : .secondary)
+                        Text(option.rawValue)
                         Spacer()
-                        Picker("Club", selection: $selectedClub) {
-                            Text("All").tag(nil as String?)
-                            ForEach(allClubs, id: \.self) { club in
-                                Text(club).tag(club as String?)
+                        if sortBy == option {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.green)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { sortBy = option }
+                }
+            }
+            
+            Section("Filters") {
+                HStack {
+                    Button("All Clubs") { selectedClub = nil }
+                        .buttonStyle(.bordered)
+                        .tint(selectedClub == nil ? .green : .secondary)
+                    Spacer()
+                    Picker("Club", selection: $selectedClub) {
+                        Text("All").tag(nil as String?)
+                        ForEach(allClubs, id: \.self) { club in
+                            Text(club).tag(club as String?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Toggle("Affordable Players Only", isOn: $affordableOnly)
+            }
+            
+            Section("Available Players") {
+                ForEach(availablePlayers.prefix(50)) { player in
+                    Button {
+                        transferIn(player: player)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(Color.green.opacity(0.8))
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Text("+").font(.title3.bold()).foregroundColor(.white)
+                                )
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(player.name)
+                                    .font(.subheadline.bold())
+                                Text(player.teamName)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(player.price, specifier: "%.1f")m")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.green)
+                                Text("Pts: \(Int(player.totalPoints)) • \(player.selectedByPercent, specifier: "%.1f")%")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                         }
-                        .pickerStyle(.menu)
+                        .padding(.vertical, 4)
                     }
-                    Toggle("Affordable Players Only", isOn: $affordableOnly)
+                    .buttonStyle(.plain)
                 }
                 
-                Section("Available Players") {
-                    ForEach(availablePlayers.prefix(50)) { player in
-                        Button {
-                            transferIn(player: player)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Circle()
-                                    .fill(Color.green.opacity(0.8))
-                                    .frame(width: 40, height: 40)
-                                    .overlay(
-                                        Text("+").font(.title3.bold()).foregroundColor(.white)
-                                    )
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(player.name)
-                                        .font(.subheadline.bold())
-                                    Text(player.teamName)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(player.price, specifier: "%.1f")m")
-                                        .font(.subheadline.bold())
-                                        .foregroundColor(.green)
-                                    Text("Pts: \(Int(player.totalPoints)) • \(player.selectedByPercent, specifier: "%.1f")%")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    
-                    if availablePlayers.isEmpty {
-                        EmptyState(icon: "person.crop.circle", title: "No Players Available", message: "Try adjusting your filters.")
-                    }
+                if availablePlayers.isEmpty {
+                    EmptyState(icon: "person.crop.circle", title: "No Players Available", message: "Try adjusting your filters.")
                 }
             }
-            .navigationTitle("Transfer In")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
+        }
+        .navigationTitle("Transfer In")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Done") { dismiss() }
             }
-            .refreshable {
-                await appState.refreshPlayers()
-            }
+        }
+        .refreshable {
+            await appState.refreshPlayers()
         }
     }
     
