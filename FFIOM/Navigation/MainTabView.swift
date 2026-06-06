@@ -12,6 +12,13 @@ struct MainTabView: View {
             TransfersView(appState: appState).tabItem { Label("Transfers", systemImage: "arrow.left.arrow.right") }.tag(2)
             PlayersView(appState: appState).tabItem { Label("Players", systemImage: "person.crop.circle.badge.plus") }.tag(3)
         }
+        .onAppear {
+            print("MainTabView.onAppear: loading data...")
+            Task {
+                await appState.loadAllData()
+                print("MainTabView.onAppear: data loaded")
+            }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
