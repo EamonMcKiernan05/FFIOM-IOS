@@ -21,6 +21,29 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     GameweekStatusCard(gameweek: appState.gameweek)
+                    
+                    // My Stats - moved to top for immediate visibility
+                    if let stats = appState.userStats {
+                        HStack(spacing: 16) {
+                            StatItem(label: "Budget", value: String(format: "%.1fm", stats.budget))
+                            StatItem(label: "Points", value: String(Int(stats.totalPoints)))
+                            StatItem(label: "Transfers", value: "\(stats.transfersRemaining)")
+                            if let rank = stats.rank {
+                                StatItem(label: "Rank", value: "#\(rank)")
+                            }
+                        }
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                    } else {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .frame(height: 50)
+                    }
+                    
                     GameweekSummaryView(appState: appState)
                     
                     // Quick nav links
@@ -95,21 +118,7 @@ struct HomeView: View {
                         .cornerRadius(12)
                     }
                     
-                    // My stats
-                    if let stats = appState.userStats {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("My Stats").font(.headline)
-                            HStack(spacing: 20) {
-                                StatItem(label: "Points", value: String(Int(stats.totalPoints)))
-                                StatItem(label: "Rank", value: stats.rank.map { "#\($0)" } ?? "N/A")
-                                StatItem(label: "Budget", value: String(format: "%.1fm", stats.budget))
-                                StatItem(label: "Transfers", value: "\(stats.transfersRemaining)")
-                            }
-                            .padding()
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(12)
-                        }
-                    }
+
                 }
                 .padding(.horizontal)
             }
