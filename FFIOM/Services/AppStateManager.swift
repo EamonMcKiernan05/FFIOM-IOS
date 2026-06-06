@@ -17,8 +17,6 @@ class AppStateManager: ObservableObject {
     private let api = APIService.shared
     
     func loadAllData() async {
-        // Ensure teamId is set before any team-dependent calls
-        await api.refreshTeamId()
         await withTaskGroup(of: Void.self) { group in
             group.addTask { do { let v = try await self.api.fetchGameweek(); await MainActor.run { self.gameweek = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchGameweeksList(); await MainActor.run { self.gameweeksList = v.gameweeks } } catch {} }
@@ -27,7 +25,14 @@ class AppStateManager: ObservableObject {
             group.addTask { do { let v = try await self.api.fetchPlayers(); await MainActor.run { self.availablePlayers = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchFixtures(); await MainActor.run { self.fixtures = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchNotifications(); await MainActor.run { self.notifications = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchMyStats(); await MainActor.run { self.userStats = v } } catch {} }
+            group.addTask {
+                do {
+                    let v = try await self.api.fetchMyStats()
+                    await MainActor.run { self.userStats = v }
+                } catch {
+                    print("fetchMyStats error: \(error.localizedDescription)")
+                }
+            }
             group.addTask { do { let v = try await self.api.getChipStatus(); await MainActor.run { self.chips = v } } catch {} }
             await group.waitForAll()
         }
