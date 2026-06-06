@@ -10,7 +10,15 @@ class APIService: ObservableObject {
     private let baseURL = "https://ffiom.com"
     private let ud = UserDefaults.standard
 
+    private let session: URLSession
+    
     private init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+        
         self.authToken = ud.string(forKey: "authToken")
         self.refreshToken = ud.string(forKey: "refreshToken")
         if let uid = ud.string(forKey: "userId") { self.currentUserId = Int(uid) }
@@ -29,7 +37,7 @@ class APIService: ObservableObject {
         guard let uc = URLComponents(string: "\(baseURL)\(endpoint)") else { throw APIError.invalidURL }
         var req = URLRequest(url: uc.url!); req.httpMethod = method; req.allHTTPHeaderFields = headers()
         if let body = body { req.httpBody = try? JSONEncoder().encode(body) }
-        let (data, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await session.data(for: req)
         guard let hr = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         guard (200...299).contains(hr.statusCode) else {
             if hr.statusCode == 401 { logout() }
