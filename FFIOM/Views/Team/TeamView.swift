@@ -81,6 +81,15 @@ struct TeamView: View {
             .navigationTitle("My Team")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "dollarsign.circle.fill")
+                            .foregroundColor(.green)
+                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0))
+                            .font(.subheadline.bold())
+                            .foregroundColor(.green)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { Task { await appState.refreshMyTeam() } }) {
                         Image(systemName: "arrow.clockwise")
@@ -662,7 +671,17 @@ struct PlayerActionSheet: View {
     
     private func swapWith(_ benchPlayer: SquadPlayer) {
         print("Swap \(player.name) with \(benchPlayer.name)")
+        actionLoading = true
         dismiss()
+        Task {
+            do {
+                try await APIService.shared.swapPlayers(startingId: player.id, benchId: benchPlayer.id)
+                await appState.refreshMyTeam()
+            } catch {
+                print("Swap error: \(error.localizedDescription)")
+            }
+            actionLoading = false
+        }
     }
     
     private func surname(from fullName: String) -> String {

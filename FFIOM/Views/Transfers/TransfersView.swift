@@ -146,7 +146,8 @@ struct TransfersView: View {
                 TransferInListView(
                     appState: appState,
                     pendingTransfers: $pendingTransfers,
-                    playerOut: transferOutPlayer
+                    playerOut: transferOutPlayer,
+                    onTransferComplete: { showingTransferIn = false }
                 )
             }
             .alert("Transfer Error", isPresented: $showAlert) {
@@ -477,9 +478,9 @@ struct PlayerTransferOverlay: View {
                 // Transfer button
                 Section {
                     Button {
-                        // Create pending transfer with placeholder player in
+                        // Create pending transfer - use player_id (actual player ID) for backend
                         let pending = PendingTransfer(
-                            playerOutId: player.id,
+                            playerOutId: player.player_id,
                             playerOut: Player(
                                 id: player.player_id, name: player.name, team: nil,
                                 price: player.purchasePrice, priceStart: player.purchasePrice,
@@ -520,7 +521,8 @@ struct PlayerTransferOverlay: View {
                 TransferInListView(
                     appState: appState,
                     pendingTransfers: $pendingTransfers,
-                    playerOut: player
+                    playerOut: player,
+                    onTransferComplete: { dismiss() }
                 )
             }
         }
@@ -533,6 +535,7 @@ struct TransferInListView: View {
     @ObservedObject var appState: AppStateManager
     @Binding var pendingTransfers: [PendingTransfer]
     let playerOut: SquadPlayer?
+    let onTransferComplete: (() -> Void)?
     
     @State private var sortBy: SortOption = .points
     @State private var selectedClub: String?
@@ -674,5 +677,7 @@ struct TransferInListView: View {
             pendingTransfers[index].playerIn = player
         }
         dismiss()
+        // After selecting a player to transfer in, go back to the main transfers page
+        onTransferComplete?()
     }
 }

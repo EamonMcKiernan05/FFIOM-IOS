@@ -115,6 +115,17 @@ struct HomeView: View {
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "dollarsign.circle.fill")
+                            .foregroundColor(.green)
+                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0))
+                            .font(.subheadline.bold())
+                            .foregroundColor(.green)
+                    }
+                }
+            }
             .refreshable { await appState.loadAllData() }
         }
     }

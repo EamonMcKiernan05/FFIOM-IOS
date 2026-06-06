@@ -57,14 +57,11 @@ class APIService: ObservableObject {
         ud.synchronize()
 
         do {
-            struct MeResp: Codable {
-                let id: Int; let username: String; let email: String?; let teamId: Int?
-                enum CodingKeys: String, CodingKey {
-                    case id, username, email; case teamId = "team_id"
-                }
-            }
+            struct TeamData: Codable { let id: Int }
+            struct MeUser: Codable { let id: Int; let username: String; let email: String? }
+            struct MeResp: Codable { let user: MeUser; let team: TeamData? }
             let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
-            if let tid = me.teamId {
+            if let tid = me.team?.id {
                 currentTeamId = tid
                 ud.set("\(tid)", forKey: "teamId")
             }
@@ -84,6 +81,10 @@ class APIService: ObservableObject {
         ud.set(resp.accessToken, forKey: "authToken")
         ud.set(resp.refreshToken, forKey: "refreshToken")
         ud.set("\(resp.user.id)", forKey: "userId")
+        if let tid = resp.team?.id {
+            currentTeamId = tid
+            ud.set("\(tid)", forKey: "teamId")
+        }
         ud.set(resp.user.username, forKey: "username")
         ud.synchronize()
 
@@ -99,8 +100,34 @@ class APIService: ObservableObject {
 
     func refreshSession() async -> Bool {
         guard authToken != nil else { return false }
-        do { _ = try await request(endpoint: "/api/users/me", responseType: User.self); return true }
+        do {
+            struct MeResp: Codable { let user: User; let team: TeamData? }
+            struct TeamData: Codable { let id: Int }
+            let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+            if let tid = me.team?.id {
+                currentTeamId = tid
+                ud.set("\(tid)", forKey: "teamId")
+                ud.synchronize()
+            }
+            return true
+        }
         catch { logout(); return false }
+    }
+    
+    func refreshTeamId() async {
+        guard authToken != nil else { return }
+        struct MeResp: Codable { let user: User; let team: TeamData? }
+        struct TeamData: Codable { let id: Int }
+        do {
+            let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+            if let tid = me.team?.id, currentTeamId != tid {
+                currentTeamId = tid
+                ud.set("\(tid)", forKey: "teamId")
+                ud.synchronize()
+            }
+        } catch {
+            print("Failed to refresh teamId: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Gameweeks
@@ -139,13 +166,29 @@ class APIService: ObservableObject {
     // MARK: - Captain / Vice-Captain
 
     func setCaptain(squadId: Int) async throws {
-        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
-        _ = try await request(endpoint: "/api/users/\(tid)/captain/\(squadId)", method: "POST", responseType: Bool.self)
+        var tid = currentTeamId
+        if tid == nil { await refreshTeamId(); tid = currentTeamId }
+        guard let tid = tid else { throw APIError.notAuthenticated }
+        struct CaptResp: Codable { let status: String; let captain_id: Int }
+        _ = try await request(endpoint: "/api/users/\(tid)/captain/\(squadId)", method: "POST", responseType: CaptResp.self)
     }
 
     func setViceCaptain(squadId: Int) async throws {
-        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
-        _ = try await request(endpoint: "/api/users/\(tid)/vice-captain/\(squadId)", method: "POST", responseType: Bool.self)
+        var tid = currentTeamId
+        if tid == nil { await refreshTeamId(); tid = currentTeamId }
+        guard let tid = tid else { throw APIError.notAuthenticated }
+        struct VCRResp: Codable { let status: String; let vice_captain_id: Int }
+        _ = try await request(endpoint: "/api/users/\(tid)/vice-captain/\(squadId)", method: "POST", responseType: VCRResp.self)
+    }
+
+    // MARK: - Swap Players (bench)
+
+    func swapPlayers(startingId: Int, benchId: Int) async throws {
+        var tid = currentTeamId
+        if tid == nil { await refreshTeamId(); tid = currentTeamId }
+        guard let tid = tid else { throw APIError.notAuthenticated }
+        struct SwapResp: Codable { let status: String }
+        _ = try await request(endpoint: "/api/users/\(tid)/squad/\(startingId)/bench", method: "POST", responseType: SwapResp.self)
     }
 
     // MARK: - Transfers
@@ -197,18 +240,30 @@ class APIService: ObservableObject {
     }
 
     func fetchMyStats() async throws -> User {
-        try await request(endpoint: "/api/users/me", responseType: User.self)
+        struct MeResp: Codable { let user: User; let team: TeamData? }
+        struct TeamData: Codable { let id: Int }
+        let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+        if let tid = me.team?.id, currentTeamId != tid {
+            currentTeamId = tid
+            ud.set("\(tid)", forKey: "teamId")
+            ud.synchronize()
+        }
+        return me.user
     }
 
     // MARK: - Chips
 
     func getChipStatus() async throws -> [Chip] {
-        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        var tid = currentTeamId
+        if tid == nil { await refreshTeamId(); tid = currentTeamId }
+        guard let tid = tid else { throw APIError.notAuthenticated }
         return try await request(endpoint: "/api/users/\(tid)/chips", responseType: [Chip].self)
     }
 
     func activateChip(chipType: String) async throws {
-        guard let tid = currentTeamId else { throw APIError.notAuthenticated }
+        var tid = currentTeamId
+        if tid == nil { await refreshTeamId(); tid = currentTeamId }
+        guard let tid = tid else { throw APIError.notAuthenticated }
         _ = try await request(endpoint: "/api/users/\(tid)/chips/activate/\(chipType)", method: "POST", responseType: Bool.self)
     }
 

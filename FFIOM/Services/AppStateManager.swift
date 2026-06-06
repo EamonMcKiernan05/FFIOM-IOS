@@ -17,6 +17,8 @@ class AppStateManager: ObservableObject {
     private let api = APIService.shared
     
     func loadAllData() async {
+        // Ensure teamId is set before any team-dependent calls
+        await api.refreshTeamId()
         await withTaskGroup(of: Void.self) { group in
             group.addTask { do { let v = try await self.api.fetchGameweek(); await MainActor.run { self.gameweek = v } } catch {} }
             group.addTask { do { let v = try await self.api.fetchGameweeksList(); await MainActor.run { self.gameweeksList = v.gameweeks } } catch {} }

@@ -66,12 +66,16 @@ struct AuthResponse: Codable {
     let refreshToken: String
     let tokenType: String
     let user: AuthUser
+    let team: AuthTeam?
+
+    struct AuthTeam: Codable { let id: Int }
 
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
         case refreshToken = "refresh_token"
         case tokenType = "token_type"
         case user
+        case team
     }
 
     var token: String { accessToken }

@@ -88,7 +88,7 @@ struct AuthView: View {
                 VStack(spacing: 0) {
                     Spacer()
                     VStack(spacing: 8) {
-                        Image(systemName: "football.american").font(.system(size: 48)).foregroundStyle(.green)
+                        Image(systemName: "soccerball").font(.system(size: 48)).foregroundStyle(.green)
                         Text("Fantasy Football").font(.title.bold()).fontWeight(.heavy)
                         Text("Isle of Man").font(.title2).foregroundStyle(.secondary)
                     }
