@@ -11,7 +11,11 @@ class APIService: ObservableObject {
     @Published var refreshToken: String?
     @Published var currentUserId: Int?
     @Published var currentTeamId: Int?
+    #if DEBUG
+    private let baseURL = "http://192.168.1.22:8000"
+    #else
     private let baseURL = "https://ffiom.com"
+    #endif
     private let ud = UserDefaults.standard
 
     private let session: URLSession
