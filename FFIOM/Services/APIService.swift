@@ -24,7 +24,6 @@ class APIService: ObservableObject {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
-        config.waitsForConnectivity = true
         self.session = URLSession(configuration: config)
         
         self.authToken = ud.string(forKey: "authToken")

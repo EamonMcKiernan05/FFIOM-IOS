@@ -17,26 +17,22 @@ class AppStateManager: ObservableObject {
     private let api = APIService.shared
     
     func loadAllData() async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { do { let v = try await self.api.fetchGameweek(); await MainActor.run { self.gameweek = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchGameweeksList(); await MainActor.run { self.gameweeksList = v.gameweeks } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchLeaderboard(limit: 20); await MainActor.run { self.leaderboard = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchMyTeam(); await MainActor.run { self.myTeam = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchPlayers(); await MainActor.run { self.availablePlayers = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchFixtures(); await MainActor.run { self.fixtures = v } } catch {} }
-            group.addTask { do { let v = try await self.api.fetchNotifications(); await MainActor.run { self.notifications = v } } catch {} }
-            group.addTask {
-                do {
-                    let v = try await self.api.fetchMyStats()
-                    await MainActor.run { self.userStats = v }
-                } catch {
-                    print("fetchMyStats error: \(error.localizedDescription)")
-                }
-            }
-            group.addTask { do { let v = try await self.api.getChipStatus(); await MainActor.run { self.chips = v } } catch {} }
-            await group.waitForAll()
-        }
+        print("📊 loadAllData: starting sequential load")
+        
+        // Sequential loading to avoid URLSession cancellation issues
+        do { gameweek = try await api.fetchGameweek(); print("✅ gameweek loaded") } catch { print("❌ gameweek: \(error)") }
+        do { let v = try await api.fetchGameweeksList(); gameweeksList = v.gameweeks; print("✅ gameweeksList loaded") } catch { print("❌ gameweeksList: \(error)") }
+        do { leaderboard = try await api.fetchLeaderboard(limit: 20); print("✅ leaderboard loaded") } catch { print("❌ leaderboard: \(error)") }
+        do { myTeam = try await api.fetchMyTeam(); print("✅ myTeam loaded (\(myTeam.count) players)") } catch { print("❌ myTeam: \(error)") }
+        do { availablePlayers = try await api.fetchPlayers(); print("✅ players loaded (\(availablePlayers.count))") } catch { print("❌ players: \(error)") }
+        do { fixtures = try await api.fetchFixtures(); print("✅ fixtures loaded") } catch { print("❌ fixtures: \(error)") }
+        do { notifications = try await api.fetchNotifications(); print("✅ notifications loaded") } catch { print("❌ notifications: \(error)") }
+        do { userStats = try await api.fetchMyStats(); print("✅ userStats loaded (budget: \(userStats?.budget ?? 0)m)") } catch { print("❌ userStats: \(error)") }
+        do { chips = try await api.getChipStatus(); print("✅ chips loaded") } catch { print("❌ chips: \(error)") }
+        
+        print("📊 loadAllData: complete")
     }
+    
     func refreshGameweek() async { do { gameweek = try await api.fetchGameweek() } catch {} }
     func refreshLeaderboard() async { do { leaderboard = try await api.fetchLeaderboard(limit: 20) } catch {} }
     func refreshMyTeam() async { do { myTeam = try await api.fetchMyTeam() } catch {} }
