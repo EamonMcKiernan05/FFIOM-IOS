@@ -24,6 +24,46 @@ struct User: Codable, Identifiable {
         case transfersRemaining = "transfers_remaining"
         case rank
     }
+
+    // Manual memberwise initializer (replaces auto-generated one lost by custom decoder)
+    init(
+        id: Int,
+        username: String,
+        email: String? = nil,
+        displayName: String? = nil,
+        emailVerified: Bool? = nil,
+        createdAt: String? = nil,
+        totalPoints: Double = 0,
+        budget: Double = 90.0,
+        transfersRemaining: Int = 1,
+        rank: Int? = nil
+    ) {
+        self.id = id
+        self.username = username
+        self.email = email
+        self.displayName = displayName
+        self.emailVerified = emailVerified
+        self.createdAt = createdAt
+        self.totalPoints = totalPoints
+        self.budget = budget
+        self.transfersRemaining = transfersRemaining
+        self.rank = rank
+    }
+
+    // Custom init to handle missing fields gracefully (e.g., /api/users/me returns minimal user)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? container.decode(Int.self, forKey: .id)) ?? 0
+        username = (try? container.decode(String.self, forKey: .username)) ?? ""
+        email = try? container.decode(String.self, forKey: .email)
+        displayName = try? container.decode(String.self, forKey: .displayName)
+        emailVerified = try? container.decode(Bool.self, forKey: .emailVerified)
+        createdAt = try? container.decode(String.self, forKey: .createdAt)
+        totalPoints = (try? container.decode(Double.self, forKey: .totalPoints)) ?? 0
+        budget = (try? container.decode(Double.self, forKey: .budget)) ?? 90.0
+        transfersRemaining = (try? container.decode(Int.self, forKey: .transfersRemaining)) ?? 1
+        rank = try? container.decode(Int.self, forKey: .rank)
+    }
 }
 
 // Simplified user from /api/auth/login & /api/auth/register

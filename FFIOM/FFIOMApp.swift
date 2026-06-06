@@ -29,20 +29,6 @@ struct AppRouter: View {
         .task {
             print("🔄 AppRouter.task: starting")
             
-            #if DEBUG
-            // Auto-login with test credentials if no valid token exists
-            if UserDefaults.standard.string(forKey: "authToken") == nil {
-                print("🔑 DEBUG: Attempting auto-login with test credentials...")
-                let ok = await authManager.login(username: "Eamon", password: "TestPass123!")
-                if ok {
-                    print("✅ DEBUG: Auto-login successful")
-                    showAuth = false
-                    return
-                } else {
-                    print("❌ DEBUG: Auto-login failed, showing login screen")
-                }
-            }
-            #endif
             
             if let token = UserDefaults.standard.string(forKey: "authToken"), !token.isEmpty {
                 print("🔄 AppRouter.task: found saved token, validating...")

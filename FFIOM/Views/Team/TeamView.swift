@@ -85,7 +85,7 @@ struct TeamView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "dollarsign.circle.fill")
                             .foregroundColor(.green)
-                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0))
+                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0.0))
                             .font(.subheadline.bold())
                             .foregroundColor(.green)
                     }
@@ -189,7 +189,7 @@ struct ChipConfirmSheet: View {
     
     var chipDescription: String {
         let chip = appState.chips.first(where: { $0.type == chipType })
-        return chip?.description ?? "Activate this chip for the current gameweek."
+        return chip?.displayDescription ?? "Activate this chip for the current gameweek."
     }
     
     var body: some View {

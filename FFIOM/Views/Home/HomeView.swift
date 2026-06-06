@@ -129,7 +129,7 @@ struct HomeView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "dollarsign.circle.fill")
                             .foregroundColor(.green)
-                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0))
+                        Text(String(format: "%.1fm", appState.userStats?.budget ?? 0.0))
                             .font(.subheadline.bold())
                             .foregroundColor(.green)
                     }

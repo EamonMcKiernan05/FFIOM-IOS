@@ -8,8 +8,20 @@ struct Transfer: Codable, Identifiable, Hashable {
 }
 
 struct Chip: Codable, Identifiable, Hashable {
-    var id: String { type }; let name: String; let description: String
-    let used: Bool; let type: String; let active: Bool; let available: Bool
+    var id: String { type }
+    let type: String
+    let used: Bool
+    let active: Bool
+    let available: Bool
+    let name: String?
+    let description: String?
+    
+    var displayName: String {
+        name ?? type.replacingOccurrences(of: "_", with: " ").capitalized
+    }
+    var displayDescription: String {
+        description ?? "Chip for current gameweek"
+    }
 }
 
 // Represents a pending transfer (player out → player in) before confirmation
