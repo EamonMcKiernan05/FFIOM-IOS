@@ -22,10 +22,6 @@ struct MainTabView: View {
                 }
             }
         }
-        .onAppear {
-            Task {
-                await appState.loadAllData()
-            }
-        }
+
     }
 }

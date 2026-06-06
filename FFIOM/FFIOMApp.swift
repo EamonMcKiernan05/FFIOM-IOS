@@ -37,6 +37,10 @@ struct AppRouter: View {
                 if ok {
                     print("✅ DEBUG: Auto-login successful")
                     showAuth = false
+                    // Load all app data after login
+                    print("📊 Loading all data...")
+                    await appState.loadAllData()
+                    print("📊 Data loaded")
                     return
                 } else {
                     print("❌ DEBUG: Auto-login failed, showing login screen")
@@ -59,9 +63,12 @@ struct AppRouter: View {
                 print("🔄 AppRouter.task: refreshSession result = \(isValid)")
                 if isValid {
                     showAuth = false
+                    // Load all app data after session refresh
+                    print("📊 Loading all data...")
+                    await appState.loadAllData()
+                    print("📊 Data loaded")
                 } else {
                     print("🔄 AppRouter.task: token expired, clearing and showing login")
-                    // Make sure UserDefaults are also cleared
                     apiService.logout()
                     UserDefaults.standard.removeObject(forKey: "authToken")
                     UserDefaults.standard.removeObject(forKey: "refreshToken")
