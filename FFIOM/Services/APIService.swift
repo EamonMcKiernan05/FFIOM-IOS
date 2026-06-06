@@ -1,5 +1,9 @@
 import Foundation
 
+// MARK: - Shared response types for /api/users/me
+struct MeTeamData: Codable { let id: Int }
+struct MeResponse: Codable { let user: User; let team: MeTeamData? }
+
 @MainActor
 class APIService: ObservableObject {
     static let shared = APIService()
@@ -109,9 +113,7 @@ class APIService: ObservableObject {
     func refreshSession() async -> Bool {
         guard authToken != nil else { return false }
         do {
-            struct MeResp: Codable { let user: User; let team: TeamData? }
-            struct TeamData: Codable { let id: Int }
-            let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+            let me: MeResponse = try await request(endpoint: "/api/users/me", responseType: MeResponse.self)
             if let tid = me.team?.id {
                 currentTeamId = tid
                 ud.set("\(tid)", forKey: "teamId")
@@ -124,10 +126,8 @@ class APIService: ObservableObject {
     
     func refreshTeamId() async {
         guard authToken != nil else { return }
-        struct MeResp: Codable { let user: User; let team: TeamData? }
-        struct TeamData: Codable { let id: Int }
         do {
-            let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+            let me: MeResponse = try await request(endpoint: "/api/users/me", responseType: MeResponse.self)
             if let tid = me.team?.id, currentTeamId != tid {
                 currentTeamId = tid
                 ud.set("\(tid)", forKey: "teamId")
@@ -248,9 +248,7 @@ class APIService: ObservableObject {
     }
 
     func fetchMyStats() async throws -> User {
-        struct MeResp: Codable { let user: User; let team: TeamData? }
-        struct TeamData: Codable { let id: Int }
-        let me: MeResp = try await request(endpoint: "/api/users/me", responseType: MeResp.self)
+        let me: MeResponse = try await request(endpoint: "/api/users/me", responseType: MeResponse.self)
         if let tid = me.team?.id, currentTeamId != tid {
             currentTeamId = tid
             ud.set("\(tid)", forKey: "teamId")
