@@ -38,10 +38,18 @@ struct AppRouter: View {
                 if isValid {
                     showAuth = false
                 } else {
-                    // Token expired — clear and show login
                     apiService.logout()
                 }
             }
+            #if DEBUG
+            // DEBUG: Auto-login for simulator testing when no valid token
+            if showAuth {
+                let testOk = await authManager.login(username: "ffiom_test_hermes", password: "HermesTest123!")
+                if testOk {
+                    showAuth = false
+                }
+            }
+            #endif
         }
     }
 }

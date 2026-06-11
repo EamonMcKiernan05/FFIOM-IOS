@@ -29,11 +29,13 @@ struct Fixture: Codable, Identifiable, Hashable {
     var dateFormatted: String {
         guard let d = date else { return "" }
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-ddTHH:mm:ss"
-        if let date = formatter.date(from: d) {
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        if let parsed = formatter.date(from: d) {
             let display = DateFormatter()
             display.dateFormat = "EEE d MMM"
-            return display.string(from: date)
+            display.locale = Locale(identifier: "en_US")
+            return display.string(from: parsed)
         }
         return d
     }

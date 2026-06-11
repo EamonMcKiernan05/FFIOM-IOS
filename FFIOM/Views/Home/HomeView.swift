@@ -121,6 +121,7 @@ struct HomeView: View {
 
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 160)
             }
             .navigationTitle("Home")
             .accessibilityIdentifier("HomeView")
@@ -146,11 +147,18 @@ struct NavCard: View {
     let icon: String; let label: String; let color: Color
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: icon).font(.title2).foregroundColor(color)
-            Text(label).font(.caption.bold()).foregroundColor(.white)
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+                .accessibilityLabel("\(label) navigation")
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(.white)
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 14)
-        .background(Color(UIColor.secondarySystemBackground)).cornerRadius(12)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color(red: 0.06, green: 0.06, blue: 0.12))
+        .cornerRadius(12)
     }
 }
 
@@ -159,9 +167,13 @@ struct GameweekStatusCard: View {
     let gameweek: Gameweek?
     var deadlineFormatted: String {
         guard let deadline = gameweek?.deadline else { return "" }
-        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-ddTHH:mm:ss"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         if let date = formatter.date(from: deadline) {
-            let display = DateFormatter(); display.dateFormat = "d MMM yyyy, HH:mm"
+            let display = DateFormatter()
+            display.dateFormat = "d MMM yyyy, HH:mm"
+            display.locale = Locale(identifier: "en_US")
             return display.string(from: date)
         }
         return deadline

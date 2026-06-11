@@ -20,6 +20,7 @@ struct MainTabView: View {
                 .tabItem { Label("Players", systemImage: "person.crop.circle.badge.plus") }
                 .tag(3)
         }
+        .background(Color(UIColor.systemBackground))
         .task {
             await appState.loadAllData()
         }
