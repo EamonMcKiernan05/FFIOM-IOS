@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Detailed player stats view with JerseyIconView rendering.
 struct PlayerDetailView: View {
     let player: Player
     
@@ -8,21 +9,20 @@ struct PlayerDetailView: View {
             VStack(spacing: 16) {
                 // Player header
                 HStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(red: 0.15, green: 0.45, blue: 0.8))
-                            .frame(width: 60, height: 60)
-                        Text(player.name.prefix(1).uppercased())
-                            .font(.title.bold())
-                            .foregroundColor(.white)
-                    }
+                    JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 60)
+                        .frame(width: 66, height: 66)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(player.name)
                             .font(.title2.bold())
                         Text(player.teamName)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        Text(String(format: "%.1fm", player.price))
+                            .font(.headline)
+                            .foregroundColor(.green)
                     }
+                    Spacer()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -71,6 +71,7 @@ struct PlayerDetailView: View {
                             .font(.headline)
                         Text(player.injuryStatus ?? "Injured")
                             .foregroundColor(.red)
+                            .accessibilityLabel("Injured: \(player.injuryStatus ?? "Unknown injury")")
                     }
                     .padding()
                     .background(Color.red.opacity(0.1))
@@ -79,10 +80,12 @@ struct PlayerDetailView: View {
             }
             .padding(.horizontal)
         }
-        .navigationTitle("Player")
+        .navigationTitle(player.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+/// Reusable stat grid for player detail and other views.
 struct StatsGrid: View {
     let stats: [(String, String)]
     

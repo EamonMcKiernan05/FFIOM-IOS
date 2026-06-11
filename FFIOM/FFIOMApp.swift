@@ -14,12 +14,11 @@ struct AppRouter: View {
     @StateObject private var appState = AppStateManager()
     @StateObject private var authManager = AuthManager()
     @State private var showAuth = true
-    
+
     var body: some View {
         Group {
             if showAuth {
                 AuthView(authManager: authManager, onLoginSuccess: {
-                    print("🔄 AppRouter: onLoginSuccess callback, setting showAuth=false")
                     showAuth = false
                 })
             } else {
@@ -27,36 +26,21 @@ struct AppRouter: View {
             }
         }
         .task {
-            print("🔄 AppRouter.task: starting")
-            
-            
-            if let token = UserDefaults.standard.string(forKey: "authToken"), !token.isEmpty {
-                print("🔄 AppRouter.task: found saved token, validating...")
+            // Check for existing auth token in Keychain
+            let keychain = KeychainService()
+            if let token = keychain.getString(forKey: "authToken"), !token.isEmpty {
                 apiService.authToken = token
-                apiService.refreshToken = UserDefaults.standard.string(forKey: "refreshToken")
-                if let uid = UserDefaults.standard.string(forKey: "userId") {
-                    apiService.currentUserId = Int(uid)
-                }
-                if let tid = UserDefaults.standard.string(forKey: "teamId") {
-                    apiService.currentTeamId = Int(tid)
-                }
-                
+                apiService.refreshToken = keychain.getString(forKey: "refreshToken")
+                apiService.currentUserId = keychain.getInt(forKey: "userId")
+                apiService.currentTeamId = keychain.getInt(forKey: "teamId")
+
                 let isValid = await authManager.refreshSession()
-                print("🔄 AppRouter.task: refreshSession result = \(isValid)")
                 if isValid {
                     showAuth = false
                 } else {
-                    print("🔄 AppRouter.task: token expired, clearing and showing login")
+                    // Token expired — clear and show login
                     apiService.logout()
-                    UserDefaults.standard.removeObject(forKey: "authToken")
-                    UserDefaults.standard.removeObject(forKey: "refreshToken")
-                    UserDefaults.standard.removeObject(forKey: "userId")
-                    UserDefaults.standard.removeObject(forKey: "teamId")
-                    UserDefaults.standard.removeObject(forKey: "username")
-                    UserDefaults.standard.synchronize()
                 }
-            } else {
-                print("🔄 AppRouter.task: no saved token, showing login")
             }
         }
     }

@@ -10,12 +10,12 @@ import Security
 /// - `userId` — Current user ID
 /// - `teamId` — Current team ID
 /// - `username` — Current username
-final class KeychainService: Sendable {
+class KeychainService {
+    static let shared = KeychainService()
 
     private let service = "com.ffiom.app"
 
-    // Default internal init — accessible within the target
-    init() {}
+    private init() {}
 
     // MARK: - String operations
 

@@ -153,10 +153,8 @@ struct LoginView: View {
         Task {
             let ok = await authManager.login(username: username, password: password)
             if ok {
-                print("✅ LoginView: login succeeded, calling onLoginSuccess")
                 onLoginSuccess?()
             } else {
-                print("❌ LoginView: login failed")
                 onSubmit()
             }
         }
@@ -197,10 +195,8 @@ struct RegisterView: View {
         Task {
             let ok = await authManager.register(username: username, password: password, email: email)
             if ok {
-                print("✅ RegisterView: register succeeded, calling onLoginSuccess")
                 onLoginSuccess?()
             } else {
-                print("❌ RegisterView: register failed")
                 onSubmit()
             }
         }

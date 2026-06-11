@@ -134,6 +134,7 @@ struct TransfersView: View {
                 .padding(.bottom, 20)
             }
             .navigationTitle("Transfers")
+            .accessibilityIdentifier("TransfersView")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(item: $selectedPlayer) { player in
                 PlayerTransferOverlay(

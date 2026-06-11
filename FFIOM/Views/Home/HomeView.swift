@@ -123,6 +123,7 @@ struct HomeView: View {
                 .padding(.horizontal)
             }
             .navigationTitle("Home")
+            .accessibilityIdentifier("HomeView")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

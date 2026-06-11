@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Players list view with search and sort.
 struct PlayersView: View {
     @ObservedObject var appState: AppStateManager
     @State private var searchQuery = ""
@@ -27,38 +28,44 @@ struct PlayersView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(filteredPlayers) { player in
-                    NavigationLink(destination: PlayerDetailView(player: player)) {
-                        HStack(spacing: 12) {
-                            // Jersey icon
-                            JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 40)
-                                .frame(width: 44, height: 44)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(player.name)
-                                    .font(.subheadline.bold())
-                                Text(player.teamName)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 2) {
-                                // Price
-                                Text(String(format: "%.1fm", player.price))
-                                    .font(.subheadline.bold())
-                                    .foregroundColor(.green)
-                                // Points
-                                Text("\(Int(player.totalPoints)) pts")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                // Goals/Assists
-                                Text("G:\(player.goals) A:\(player.assists)")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+            Group {
+                if appState.isLoadingPlayers {
+                    ProgressView("Loading players...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityLabel("Loading players")
+                } else {
+                    List {
+                        ForEach(filteredPlayers) { player in
+                            NavigationLink(destination: PlayerDetailView(player: player)) {
+                                HStack(spacing: 12) {
+                                    JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 40)
+                                        .frame(width: 44, height: 44)
+                                        .accessibilityHidden(true)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(player.name)
+                                            .font(.subheadline.bold())
+                                        Text(player.teamName)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Text(String(format: "%.1fm", player.price))
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.green)
+                                        Text("\(Int(player.totalPoints)) pts")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Text("G:\(player.goals) A:\(player.assists)")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                                .accessibilityLabel("\(player.name), \(player.teamName), \(String(format: "%.1f", player.price)) million, \(Int(player.totalPoints)) points, \(player.goals) goals, \(player.assists) assists")
                             }
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
@@ -76,6 +83,7 @@ struct PlayersView: View {
                         }
                     } label: {
                         Image(systemName: "arrow.up.arrow.down")
+                            .accessibilityLabel("Sort players")
                     }
                 }
             }
@@ -84,8 +92,7 @@ struct PlayersView: View {
     }
 }
 
-// MARK: - Player Detail View
-
+/// Detailed player stats view with JerseyIconView rendering.
 struct PlayerDetailView: View {
     let player: Player
     
@@ -96,6 +103,7 @@ struct PlayerDetailView: View {
                 HStack(spacing: 16) {
                     JerseyIconView(teamId: player.team?.id, teamName: player.teamName, size: 60)
                         .frame(width: 66, height: 66)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(player.name)
                             .font(.title2.bold())
@@ -106,6 +114,7 @@ struct PlayerDetailView: View {
                             .font(.headline)
                             .foregroundColor(.green)
                     }
+                    Spacer()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -154,6 +163,7 @@ struct PlayerDetailView: View {
                             .font(.headline)
                         Text(player.injuryStatus ?? "Injured")
                             .foregroundColor(.red)
+                            .accessibilityLabel("Injured: \(player.injuryStatus ?? "Unknown injury")")
                     }
                     .padding()
                     .background(Color.red.opacity(0.1))
@@ -162,10 +172,12 @@ struct PlayerDetailView: View {
             }
             .padding(.horizontal)
         }
-        .navigationTitle("Player")
+        .navigationTitle(player.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+/// Reusable stat grid for player detail and other views.
 struct StatsGrid: View {
     let stats: [(String, String)]
     

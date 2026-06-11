@@ -79,6 +79,7 @@ struct TeamView: View {
                 .padding(.bottom, 12)
             }
             .navigationTitle("My Team")
+            .accessibilityIdentifier("TeamView")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -93,6 +94,7 @@ struct TeamView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { Task { await appState.refreshMyTeam() } }) {
                         Image(systemName: "arrow.clockwise")
+                            .accessibilityLabel("Refresh team")
                     }
                 }
             }
@@ -253,9 +255,7 @@ struct ChipConfirmSheet: View {
                 try await APIService.shared.activateChip(chipType: chipType)
                 await appState.loadAllData()
                 dismiss()
-            } catch {
-                print("Chip activation error: \(error.localizedDescription)")
-            }
+            } catch {            }
             loading = false
         }
     }
@@ -472,6 +472,7 @@ struct PitchPlayerNode: View {
                         .padding(2.5)
                         .background(Color.yellow)
                         .clipShape(Circle())
+                        .accessibilityLabel("Captain")
                 } else if isViceCaptain {
                     Text("VC")
                         .font(.system(size: 7, weight: .bold))
@@ -479,6 +480,7 @@ struct PitchPlayerNode: View {
                         .padding(2.5)
                         .background(Color.gray)
                         .clipShape(Capsule())
+                        .accessibilityLabel("Vice-Captain")
                 }
             }
             
@@ -648,9 +650,7 @@ struct PlayerActionSheet: View {
                 try await APIService.shared.setCaptain(squadId: player.id)
                 await appState.refreshMyTeam()
                 dismiss()
-            } catch {
-                print("Set captain error: \(error.localizedDescription)")
-            }
+            } catch {            }
             actionLoading = false
         }
     }
@@ -662,24 +662,18 @@ struct PlayerActionSheet: View {
                 try await APIService.shared.setViceCaptain(squadId: player.id)
                 await appState.refreshMyTeam()
                 dismiss()
-            } catch {
-                print("Set vice-captain error: \(error.localizedDescription)")
-            }
+            } catch {            }
             actionLoading = false
         }
     }
     
-    private func swapWith(_ benchPlayer: SquadPlayer) {
-        print("Swap \(player.name) with \(benchPlayer.name)")
-        actionLoading = true
+    private func swapWith(_ benchPlayer: SquadPlayer) {        actionLoading = true
         dismiss()
         Task {
             do {
                 try await APIService.shared.swapPlayers(startingId: player.id, benchId: benchPlayer.id)
                 await appState.refreshMyTeam()
-            } catch {
-                print("Swap error: \(error.localizedDescription)")
-            }
+            } catch {            }
             actionLoading = false
         }
     }
@@ -699,6 +693,7 @@ struct BenchSection: View {
             Text("BENCH")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white.opacity(0.7))
+                .accessibilityLabel("Bench players")
                 .padding(.horizontal, 4)
             
             HStack(spacing: 16) {

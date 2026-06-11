@@ -138,8 +138,6 @@
 				28553E9CEFB9AF0101D0406D /* AppStateManager.swift */,
 				3FBD96D790023AF35ACC069A /* AuthManager.swift */,
 				C8B46FD3B57358E7513788AA /* KeychainService.swift */,
-				43C686E494654762865C5811 /* NetworkMonitor.swift */,
-				63A9CC3C623A0A0DE199045F /* APIConfig.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -215,8 +213,6 @@
 				12634CAAF1FC8CAA7A50D7B4 /* PlayerCard.swift */,
 				367EF70F7F8B19848BB684A8 /* ClubKits.swift */,
 				F12139318580B2B7955CD836 /* JerseyIconView.swift */,
-				9F637195CB01FD04F6788C28 /* ImageLoader.swift */,
-				76E0B2EB4AE678D4347F0762 /* OfflineBanner.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
