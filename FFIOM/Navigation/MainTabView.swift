@@ -20,9 +20,6 @@ struct MainTabView: View {
                 .tabItem { Label("Players", systemImage: "person.crop.circle.badge.plus") }
                 .tag(3)
         }
-        // iOS 18 tab bar ghosting fix: make tab bar background opaque
-        .toolbarBackground(.visible, for: .tabBar)
-        .toolbarBackground(Color(UIColor.systemBackground), for: .tabBar)
         .background(Color(UIColor.systemBackground))
         .task {
             await appState.loadAllData()

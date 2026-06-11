@@ -76,7 +76,7 @@ struct TeamView: View {
                             .padding(.top, 12)
                     }
                 }
-                .padding(.bottom, 100)
+                .padding(.bottom, 12)
             }
             .navigationTitle("My Team")
             .accessibilityIdentifier("TeamView")
