@@ -1,14 +1,6 @@
 import Foundation
 
 /// MARK: - API Configuration
-enum APIConfig {
-    static var baseURL: String {
-        Bundle.main.infoDictionary?["API_BASE_URL"] as? String
-            ?? "https://ffiom.com"
-    }
-    static let requestTimeout: TimeInterval = 30
-}
-
 /// MARK: - Shared response types
 
 struct MeTeamData: Codable { let id: Int }

@@ -121,7 +121,7 @@ struct HomeView: View {
 
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 160)
+                .padding(.bottom, 100)
             }
             .navigationTitle("Home")
             .accessibilityIdentifier("HomeView")

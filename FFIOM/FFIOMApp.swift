@@ -2,6 +2,25 @@ import SwiftUI
 
 @main
 struct FFIOMApp: App {
+    init() {
+        // Configure image caching
+        ImageCache.configure()
+        
+        // iOS 18 tab bar ghosting fix: make tab bar opaque and non-transparent
+        let tabBar = UITabBar.appearance()
+        tabBar.isTranslucent = false
+        tabBar.backgroundColor = .systemBackground
+        
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .systemBackground
+        appearance.backgroundEffect = .none
+        tabBar.standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            tabBar.scrollEdgeAppearance = appearance
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
             AppRouter()

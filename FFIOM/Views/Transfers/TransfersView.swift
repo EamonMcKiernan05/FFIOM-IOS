@@ -131,7 +131,7 @@ struct TransfersView: View {
                         .padding(.top, 16)
                     }
                 }
-                .padding(.bottom, 20)
+                .padding(.bottom, 100)
             }
             .navigationTitle("Transfers")
             .accessibilityIdentifier("TransfersView")

@@ -1,11 +1,26 @@
 import SwiftUI
 
-/// Cached async image loader using URLSession.shared with URLCache.
+/// Image cache configuration utility.
+enum ImageCache {
+    /// Configure shared URLCache with disk + memory caching.
+    /// Call once during app launch.
+    static func configure() {
+        URLSession.shared.configuration.urlCache = URLCache(
+            memoryCapacity: 50 * 1024 * 1024,   // 50 MB memory
+            diskCapacity: 100 * 1024 * 1024      // 100 MB disk
+        )
+    }
+}
+
+/// Cached async image loader using URLSession with disk + memory caching.
 /// Automatically caches responses to avoid re-downloading on reload.
+/// Uses URLSession.shared with .reloadIgnoringLocalCacheData for first load,
+/// then relies on URLCache for subsequent loads.
 struct CachedAsyncImage: View {
     let url: URL?
     @State private var image: UIImage?
     @State private var isLoading = false
+    @State private var loadAttempted = false
 
     init(url: URL?) {
         self.url = url
@@ -21,19 +36,34 @@ struct CachedAsyncImage: View {
                 ProgressView()
                     .scaleEffect(0.7)
             } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.2))
+                // Empty - fallback layer (local asset) will show underneath
+                Color.clear
             }
         }
         .onAppear {
-            loadImage()
+            guard let url = url, !loadAttempted else { return }
+            loadImage(from: url)
         }
     }
 
-    private func loadImage() {
-        guard let url = url, image == nil else { return }
+    private func loadImage(from url: URL) {
+        loadAttempted = true
         isLoading = true
-        URLSession.shared.dataTask(with: url) { data, _, error in
+
+        // Check cache first
+        if let cachedData = URLCache.shared.cachedResponse(for: URLRequest(url: url))?.data,
+           let cachedImage = UIImage(data: cachedData) {
+            self.image = cachedImage
+            self.isLoading = false
+            return
+        }
+
+        // Create request with caching policy
+        var request = URLRequest(url: url)
+        request.cachePolicy = .returnCacheDataElseLoad
+        request.setValue("image/svg+xml,image/png,image/jpeg,*/*", forHTTPHeaderField: "Accept")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
             if let data = data, let uiImage = UIImage(data: data) {
                 DispatchQueue.main.async {
                     self.image = uiImage
@@ -42,22 +72,9 @@ struct CachedAsyncImage: View {
             } else {
                 DispatchQueue.main.async {
                     self.isLoading = false
+                    // Silently fall back to local asset (shown in ZStack underneath)
                 }
             }
         }.resume()
     }
-}
-
-/// Configure shared URLCache with disk + memory caching.
-/// Call once during app launch (in APIService or AppRouter).
-func configureImageCache() {
-    let cache = URLCache(
-        memoryCapacity: 50 * 1024 * 1024,   // 50 MB memory
-        diskCapacity: 100 * 1024 * 1024      // 100 MB disk
-    )
-    cache.diskCapacity = 100 * 1024 * 1024
-    cache.memoryCapacity = 50 * 1024 * 1024
-    // Note: We don't set URLSession.shared.configuration.urlCache because
-    // URLSession.shared has a pre-configured shared cache that we extend instead.
-    // The default URLSession.shared.cache is used automatically by dataTask calls above.
 }
